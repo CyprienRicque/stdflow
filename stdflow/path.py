@@ -1,7 +1,5 @@
 import logging
 import os
-from copy import copy, deepcopy
-from datetime import datetime
 from typing import Optional
 
 from stdflow.config import DATE_VERSION_FORMAT, STEP_PREFIX, VERSION_PREFIX
@@ -35,10 +33,10 @@ class Path:
         """
         # if step is str and contains step_, remove it
         if isinstance(step_name, str) and step_name.startswith(STEP_PREFIX):
-            step_name = step_name[len(STEP_PREFIX):]
+            step_name = step_name[len(STEP_PREFIX) :]
         # if version is str and contains v_, remove it
         if isinstance(version, str) and version.startswith(VERSION_PREFIX):
-            version = version[len(VERSION_PREFIX):]
+            version = version[len(VERSION_PREFIX) :]
 
         self.data_root_path = data_root_path
         self.path: str = "/".join(path) if isinstance(path, list) else path
@@ -137,7 +135,9 @@ class Path:
 
     @staticmethod
     def full_path_(data_root_path, path, step, version, file_name):
-        return os.path.join(data_root_path or "", path or "", step or "", version or "", file_name or "")
+        return os.path.join(
+            data_root_path or "", path or "", step or "", version or "", file_name or ""
+        )
 
     @property
     def extension(self):
@@ -160,6 +160,10 @@ class Path:
             version=step_dict["version"],
             file_name=f"{file_name}.{file_type}",
         )
+
+    @property
+    def metadata_path(self):
+        return os.path.join(self.dir_path, "metadata.json")
 
     @classmethod
     def from_input_params(cls, data_root_path, path, step, version, file_name):
@@ -184,7 +188,15 @@ class Path:
             file_name=file_name,
         )
 
+    def __str__(self):
+        return self.full_path
+
+    def __repr__(self):
+        return self.full_path
+
 
 if __name__ == "__main__":
     path = Path("./data", path="fr", step_name="raw", version="last")
-    assert path.full_path == "./data/fr/step_raw/v_2/", f"src.full_path: {path.full_path}"
+    assert (
+        path.full_path == "./data/fr/step_raw/v_2/"
+    ), f"src.full_path: {path.full_path}"

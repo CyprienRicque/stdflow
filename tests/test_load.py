@@ -1,4 +1,5 @@
 import pandas as pd
+
 import stdflow as sf
 
 
@@ -22,11 +23,12 @@ def setup():
     text: random text
     tags: random tags
     """
-    import os
-    import shutil
-    import random
-    import string
     import datetime
+    import os
+    import random
+    import shutil
+    import string
+
     import pandas as pd
 
     if os.path.exists("./data"):
@@ -37,7 +39,6 @@ def setup():
     os.mkdir("./data/fr/step_raw/v_1")
     os.mkdir("./data/es")
     os.mkdir("./data/es/step_raw")
-
 
     def random_string(length=10):
         letters = string.ascii_lowercase
@@ -75,30 +76,39 @@ def setup():
         }
     )
     df_es.to_csv("./data/es/step_raw/random.csv", index=False)
-    df_es.loc[:, ['id', 'text']].to_csv("./data/es/random_base.csv", index=False)
+    df_es.loc[:, ["id", "text"]].to_csv("./data/es/random_base.csv", index=False)
 
 
 setup()
 
 
 def test_load():
-
-    step = sf.Step()  # only necessary when doing custom pipeline, otherwise functions are accessible at package level
+    step = (
+        sf.Step()
+    )  # only necessary when doing custom pipeline, otherwise functions are accessible at package level
 
     df = step.load("./data", path="fr", step="raw", version="1", file_name="random.csv")
     assert df.shape == (100, 4)
 
-    df = step.load("./data", path="fr", step="raw", version="last", file_name="random.csv")
+    df = step.load(
+        "./data", path="fr", step="raw", version="last", file_name="random.csv"
+    )
     assert df.shape == (100, 4)
 
-    df = step.load("./data", path="fr", step="raw", method=pd.read_csv, file_name="random.csv")
+    df = step.load(
+        "./data", path="fr", step="raw", method=pd.read_csv, file_name="random.csv"
+    )
     assert df.shape == (100, 4)
 
 
 def test_load_no_version():
-    step = sf.Step()  # only necessary when doing custom pipeline, otherwise functions are accessible at package level
+    step = (
+        sf.Step()
+    )  # only necessary when doing custom pipeline, otherwise functions are accessible at package level
 
-    df = step.load("./data", path="es", step="raw", version=None, file_name="random.csv")
+    df = step.load(
+        "./data", path="es", step="raw", version=None, file_name="random.csv"
+    )
     assert df.shape == (100, 5)
 
 

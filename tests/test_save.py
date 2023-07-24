@@ -1,7 +1,9 @@
 import os
 
 import pandas as pd
+
 import stdflow as sf
+from stdflow import Step
 
 
 def setup():
@@ -24,11 +26,12 @@ def setup():
     text: random text
     tags: random tags
     """
-    import os
-    import shutil
-    import random
-    import string
     import datetime
+    import os
+    import random
+    import shutil
+    import string
+
     import pandas as pd
 
     if os.path.exists("./data"):
@@ -39,7 +42,6 @@ def setup():
     os.mkdir("./data/fr/step_raw/v_1")
     os.mkdir("./data/es")
     os.mkdir("./data/es/step_raw")
-
 
     def random_string(length=10):
         letters = string.ascii_lowercase
@@ -77,21 +79,29 @@ def setup():
         }
     )
     df_es.to_csv("./data/es/step_raw/random.csv", index=False)
-    df_es.loc[:, ['id', 'text']].to_csv("./data/es/random_base.csv", index=False)
+    df_es.loc[:, ["id", "text"]].to_csv("./data/es/random_base.csv", index=False)
 
 
 setup()
 
 
 def test_export():
-
-    step = sf.Step()  # only necessary when doing custom pipeline, otherwise functions are accessible at package level
+    step = (
+        sf.Step()
+    )  # only necessary when doing custom pipeline, otherwise functions are accessible at package level
 
     df = step.load("./data", path="fr", step="raw", version="1", file_name="random.csv")
     assert df.shape == (100, 4)
 
     df["new_col"] = "new_col"
-    step.save(df, "./data", path="fr", step="with_new_col", version="1", file_name="random.csv")
+    step.save(
+        df,
+        "./data",
+        path="fr",
+        step="with_new_col",
+        version="1",
+        file_name="random.csv",
+    )
 
 
 # def test_load():
@@ -109,25 +119,43 @@ def test_export():
 #
 #
 
+
 #
 def test_save_merge():
-    step = sf.Step()  # only necessary when doing custom pipeline, otherwise functions are accessible at package level
+    step = (
+        sf.Step()
+    )  # only necessary when doing custom pipeline, otherwise functions are accessible at package level
 
-    df1 = step.load("./data", path="es", step="raw", version=None, file_name="random.csv")
+    # sf.storage = "g"
+
+    df1 = step.load(
+        "./data", path="es", step="raw", version=None, file_name="random.csv"
+    )
     assert df1.shape == (100, 5)
+
     df2 = step.load("./data", path="es", file_name="random_base.csv")
     assert df2.shape == (100, 2)
 
-    df_full = pd.merge(df1, df2, on='id', how='left')
+    df_full = pd.merge(df1, df2, on="id", how="left")
 
-    step.save(df_full, "./data", path="es", step="merge", file_name="merged.csv")
-    assert os.path.exists("./data/es/step_merge/merged.csv")
+    step.save(df_full, "./data", path="es", step="merge_left", file_name="merged.csv")
+    assert os.path.exists("./data/es/step_merge_left/merged.csv")
 
-    step.save(df_full, "./data", path="es", step="merge", version="v_202307241247", file_name="merged.csv")
+    step.save(
+        df_full,
+        "./data",
+        path="es",
+        step="merge",
+        version="v_202307241247",
+        file_name="merged.csv",
+    )
     assert os.path.exists("./data/es/step_merge/v_202307241247/merged.csv")
-    assert os.path.exists("./data/es/step_merge/merged.csv")
+    assert os.path.exists("./data/es/step_merge_left/merged.csv")
     assert os.path.exists("./data/es/step_merge/v_202307241247/metadata.json")
-    assert os.path.exists("./data/es/step_merge/metadata.json")
+    assert os.path.exists("./data/es/step_merge_left/metadata.json")
+    s = Step.from_file("./data/es/step_merge/v_202307241247/metadata.json")
+    assert len(s.data_l) == 4, f"{len(s.data_l)=}, {s.data_l=}"
+    assert len(s.data_l_in) == 2, f"{len(s.data_l_in)=}, {s.data_l_in=}"
 
 
 def test_2_step():
@@ -135,17 +163,39 @@ def test_2_step():
 
     step = sf.Step()
 
-    df1 = step.load("./data", path="es", step="merge", version="v_202307241247", file_name="merged.csv")
-    df2 = step.load("./data", path="fr", step="raw", version="1", file_name="random.csv")
+    df1 = step.load(
+        "./data",
+        path="es",
+        step="merge",
+        version="v_202307241247",
+        file_name="merged.csv",
+    )
+    df2 = step.load(
+        "./data", path="fr", step="raw", version="1", file_name="random.csv"
+    )
 
-    df_full = pd.merge(df1, df2, on='id', how='left')
-    step.save(df_full, "./data", path="global", step="es_fr_merge", version="0", file_name="merged_g.csv")
+    df_full = pd.merge(df1, df2, on="id", how="left")
+    step.save(
+        df_full,
+        "./data",
+        path="global",
+        step="es_fr_merge",
+        version="0",
+        file_name="merged_g.csv",
+    )
     assert os.path.exists("./data/global/step_es_fr_merge/v_0/merged_g.csv")
     assert os.path.exists("./data/global/step_es_fr_merge/v_0/metadata.json")
+
+    s = Step.from_file("data/global/step_es_fr_merge/v_0/metadata.json")
+    assert len(s.data_l) == 5, f"{len(s.data_l)=}, {s.data_l=}"
+    assert len(s.data_l_in) == 2, f"{len(s.data_l_in)=}, {s.data_l_in=}"
 
 
 if __name__ == "__main__":
     test_export()
     test_save_merge()
     test_2_step()
+
+
+
 

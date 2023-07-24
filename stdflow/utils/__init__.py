@@ -1,6 +1,7 @@
 import glob
 import os
 import re
+import shutil
 from typing import List, Union
 
 from graphviz import Digraph
@@ -62,13 +63,17 @@ def get_pipeline(metadata, dest):
 
     # For each file, create a node, and for each input_file, draw an edge
     for file in metadata["files"]:
-        dot.node(file["name"])
+        dot.node(file["file_name"])
         for input_file in file.get("input_files", []):
             # find the file in the list of files using uuid
-            input_file = next(
+            print(f"{dest=}")
+            print(f"{input_file['uuid']=}")
+            print([f["uuid"] for f in metadata["files"]])
+
+            input_file = [
                 f for f in metadata["files"] if f["uuid"] == input_file["uuid"]
-            )
-            dot.edge(input_file["name"], file["name"])
+            ][0]
+            dot.edge(input_file["file_name"], file["file_name"])
 
     # Save the graph in DOT format
     dot.save(os.path.join(dest, "pipeline.dot"))
@@ -77,37 +82,45 @@ def get_pipeline(metadata, dest):
     dot.render("pipeline")
 
 
-def to_html(metadata, dest):
+def to_html(metadata_file, dest):
     import json
 
     from jinja2 import Environment, FileSystemLoader
 
-    get_pipeline(metadata, dest)
+    # Load metadata
+    with open(metadata_file) as f:
+        metadata = json.load(f)
+
+    # get_pipeline(metadata, dest)
 
     # Set up Jinja2 environment
     env = Environment(loader=FileSystemLoader("."))
-    template = env.get_template("html/template.html")
+    template = env.get_template("stdflow/html/template.html")
 
     # Convert to JavaScript
     js_data = json.dumps(metadata)
 
     # Write JS data into HTML file
-    with open("data.js", "w") as js_file:
+    with open(os.path.join(dest, "data.js"), "w") as js_file:
         js_file.write(f"var data = {js_data};")
 
-    # Write output to HTML file
-    with open(os.path.join(dest, "pipeline.html"), "w") as html_file:
-        # html_file.write(output)
-        html_file.write(
-            """
-<html>
-<body>
-<h1>Pipeline</h1>
-<img src="pipeline.png" alt="Pipeline">
-</body>
-</html>
-"""
-        )
+    # cp html/template.html dest
+    shutil.copy("stdflow/html/template.html", dest)
+
+
+#     # Write output to HTML file
+#     with open(os.path.join(dest, "pipeline.html"), "w") as html_file:
+#         # html_file.write(output)
+#         html_file.write(
+#             """
+# <html>
+# <body>
+# <h1>Pipeline</h1>
+# <img src="pipeline.png" alt="Pipeline">
+# </body>
+# </html>
+# """
+#         )
 
 
 if __name__ == "__main__":

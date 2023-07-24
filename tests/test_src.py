@@ -1,13 +1,15 @@
-from stdflow.path import Path
 import os
+
+from stdflow.path import Path
 
 
 def setup():
-    import os
-    import shutil
-    import random
-    import string
     import datetime
+    import os
+    import random
+    import shutil
+    import string
+
     import pandas as pd
 
     if os.path.exists("./data"):
@@ -23,30 +25,59 @@ def setup():
     # create empty file
     open("./data/fr/step_raw/v_0", "w").close()
 
+
 setup()
 
 
 def test_versions():
     path = Path("./data", path="fr", step_name="raw", version="last")
-    assert path.full_path == "./data/fr/step_raw/v_2/", f"src.full_path: {path.full_path}"
+    assert (
+        path.full_path == "./data/fr/step_raw/v_2/"
+    ), f"src.full_path: {path.full_path}"
 
     path = Path("./data", path="fr", step_name="raw", version="first")
-    assert path.full_path == "./data/fr/step_raw/v_1/", f"src.full_path: {path.full_path}"
+    assert (
+        path.full_path == "./data/fr/step_raw/v_1/"
+    ), f"src.full_path: {path.full_path}"
 
 
 def test_from_ip_split():
-    path = Path.from_input_params(data_root_path="./data", path="fr", step="raw", version="1", file_name="file.csv")
-    assert path.full_path == "./data/fr/step_raw/v_1/file.csv", f"path.full_path: {path.full_path}"
+    path = Path.from_input_params(
+        data_root_path="./data",
+        path="fr",
+        step="raw",
+        version="1",
+        file_name="file.csv",
+    )
+    assert (
+        path.full_path == "./data/fr/step_raw/v_1/file.csv"
+    ), f"path.full_path: {path.full_path}"
 
 
 def test_from_ip_split_wrong_input():
-    path = Path.from_input_params(data_root_path="./data", path="fr", step="step_raw", version="v_1", file_name="file.csv")
-    assert path.full_path == "./data/fr/step_raw/v_1/file.csv", f"path.full_path: {path.full_path}"
+    path = Path.from_input_params(
+        data_root_path="./data",
+        path="fr",
+        step="step_raw",
+        version="v_1",
+        file_name="file.csv",
+    )
+    assert (
+        path.full_path == "./data/fr/step_raw/v_1/file.csv"
+    ), f"path.full_path: {path.full_path}"
 
 
 def test_from_ip_split_auto():
-    path = Path.from_input_params(data_root_path="./data", path="fr", step="raw", version="first", file_name="file.csv")
-    assert path.full_path == "./data/fr/step_raw/v_1/file.csv", f"path.full_path: {path.full_path}"
+    path = Path.from_input_params(
+        data_root_path="./data",
+        path="fr",
+        step="raw",
+        version="first",
+        file_name="file.csv",
+    )
+    assert (
+        path.full_path == "./data/fr/step_raw/v_1/file.csv"
+    ), f"path.full_path: {path.full_path}"
 
 
 if __name__ == "__main__":
