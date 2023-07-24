@@ -1,5 +1,7 @@
 # stdflow
 
+# README OUTDATED
+
 Data flow tool that transform your notebooks and python files into pipeline steps by standardizing the data input /
 output. [for Data science project]
 

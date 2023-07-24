@@ -12,7 +12,7 @@ setup(
     packages=find_packages(),
     author="Cyprien Ricque",
     author_email="ricque.cyprien@gmail.com",
-    description="A package that transform your notebooks and python files into pipeline steps by standardizing the data input / output.",
+    description="[alpha] A package that transform your notebooks and python files into pipeline steps by standardizing the data input / output.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/CyprienRicque/stdflow",
