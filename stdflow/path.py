@@ -106,6 +106,16 @@ class Path:
         )
 
     @property
+    def full_path_from_root(self):
+        return Path.full_path_(
+            None,
+            self.path,
+            fstep(self.step_name) if self.step_name else "",
+            fv(self.version) if self.version else "",
+            self.file_name,
+        )
+
+    @property
     def dir_path(self):
         return Path.full_path_(
             self.data_root_path,
@@ -145,7 +155,7 @@ class Path:
     def from_dict(cls, step_dict, file_name, file_type):
         return cls(
             data_root_path=None,
-            path=step_dict["r_path"],
+            path=step_dict["path"],
             step_name=step_dict["step_name"],
             version=step_dict["version"],
             file_name=f"{file_name}.{file_type}",

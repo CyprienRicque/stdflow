@@ -71,7 +71,7 @@ class Step:
         ] = None  # input step version. default when exporting
         self._path_in: Optional[
             Union[list[str] | str]
-        ] = None  # input step r_path. default when exporting
+        ] = None  # input step path. default when exporting
         self._file_in: Optional[str] = None  # input step file. default when exporting
         self._method_in: Optional[
             Union[str | object]
@@ -86,7 +86,7 @@ class Step:
         ] = None  # output step version. default when exporting
         self._path_out: Optional[
             Union[list[str] | str]
-        ] = None  # output step r_path. default when exporting
+        ] = None  # output step path. default when exporting
         self._file_name_out: Optional[str] = None  # output step file. default when exporting
         self._method_out: Optional[
             Union[str | object]
@@ -135,7 +135,7 @@ class Step:
         ] = None  # input step version. default when exporting
         self._path_in: Optional[
             Union[list[str] | str]
-        ] = None  # input step r_path. default when exporting
+        ] = None  # input step path. default when exporting
         self._file_in: Optional[str] = None  # input step file. default when exporting
         self._method_in: Optional[
             Union[str | object]
@@ -150,7 +150,7 @@ class Step:
         ] = None  # output step version. default when exporting
         self._path_out: Optional[
             Union[list[str] | str]
-        ] = None  # output step r_path. default when exporting
+        ] = None  # output step path. default when exporting
         self._file_name_out: Optional[str] = None  # output step file. default when exporting
         self._method_out: Optional[
             Union[str | object]
@@ -290,6 +290,8 @@ class MetaData:
 
     @classmethod
     def from_dict(cls, d):
+        if not d:
+            raise ValueError("d is empty")
         path = Path.from_dict(d["step"], d["file_name"], d["file_type"])
 
         return cls(
@@ -328,4 +330,9 @@ class MetaData:
             logger.debug(f"no metadata file found in {file_path}")
             return None
         with open(os.path.join(file_path, MetaData.file_name), "r") as f:
-            return MetaData.from_dict(json.load(f))
+            files = json.load(f)['files']
+            file = next(
+                (f for f in files if Path.from_dict(f["step"], f["file_name"], f["file_type"]).full_path_from_root == path.full_path_from_root),
+                None,
+            )
+            return MetaData.from_dict(file)

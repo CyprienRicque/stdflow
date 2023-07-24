@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 import stdflow as sf
 
@@ -108,20 +110,42 @@ def test_export():
 #
 
 #
-# def test_load_no_version():
-#     step = sf.Step()  # only necessary when doing custom pipeline, otherwise functions are accessible at package level
-#
-#     df = step.load("./data", path="es", step="raw", version=None, file_name="random.csv")
-#     assert df.shape == (100, 5)
-#
-#
-# def test_load_no_v_no_s():
-#     step = sf.Step()
-#
-#     df = step.load("./data", path="es", file_name="random_base.csv")
-#     assert df.shape == (100, 2)
+def test_save_merge():
+    step = sf.Step()  # only necessary when doing custom pipeline, otherwise functions are accessible at package level
+
+    df1 = step.load("./data", path="es", step="raw", version=None, file_name="random.csv")
+    assert df1.shape == (100, 5)
+    df2 = step.load("./data", path="es", file_name="random_base.csv")
+    assert df2.shape == (100, 2)
+
+    df_full = pd.merge(df1, df2, on='id', how='left')
+
+    step.save(df_full, "./data", path="es", step="merge", file_name="merged.csv")
+    assert os.path.exists("./data/es/step_merge/merged.csv")
+
+    step.save(df_full, "./data", path="es", step="merge", version="v_202307241247", file_name="merged.csv")
+    assert os.path.exists("./data/es/step_merge/v_202307241247/merged.csv")
+    assert os.path.exists("./data/es/step_merge/merged.csv")
+    assert os.path.exists("./data/es/step_merge/v_202307241247/metadata.json")
+    assert os.path.exists("./data/es/step_merge/metadata.json")
+
+
+def test_2_step():
+    test_save_merge()
+
+    step = sf.Step()
+
+    df1 = step.load("./data", path="es", step="merge", version="v_202307241247", file_name="merged.csv")
+    df2 = step.load("./data", path="fr", step="raw", version="1", file_name="random.csv")
+
+    df_full = pd.merge(df1, df2, on='id', how='left')
+    step.save(df_full, "./data", path="global", step="es_fr_merge", version="0", file_name="merged_g.csv")
+    assert os.path.exists("./data/global/step_es_fr_merge/v_0/merged_g.csv")
+    assert os.path.exists("./data/global/step_es_fr_merge/v_0/metadata.json")
 
 
 if __name__ == "__main__":
-    test_load()
-    test_load_no_version()
+    test_export()
+    test_save_merge()
+    test_2_step()
+
