@@ -1,3 +1,29 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stdflow"
+version = "0.0.1"
+description = "[alpha] A package that transform your notebooks and python files into pipeline steps by standardizing the data input / output."
+readme = "README.md"
+authors = [
+    { name = "Cyprien Ricque", email = "ricque.cyprien@gmail.com" },
+]
+license = "Apache"
+classifiers = [
+    "Development Status :: First release",
+    "Programming Language :: Python :: 3.9",
+]
+dependencies = [
+    "pandas~=2.0.3",
+    "datetime~=5.2",
+    "python-box[all]~=7.0",
+    "openpyxl~=3.1.2",
+    "python-box~=7.0.1"
+]
+
+
 [tool.isort]
 profile = "black"
 
