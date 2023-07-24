@@ -17,7 +17,7 @@ logger.setLevel(logging.DEBUG)
 class Path:
     def __init__(
         self,
-        data_root_path: Optional[str] = "./data",
+        data_root_path: str | None = "./data",
         path=None,
         step_name=None,
         version="last",

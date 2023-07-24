@@ -69,10 +69,7 @@ class MetaData:
         input_files: list["MetaData"] = None,
     ):
         if input_files is not None:
-            input_files = list(
-                {"uuid": file.uuid}
-                for file in input_files
-            )
+            input_files = list({"uuid": file.uuid} for file in input_files)
         columns = list(
             {"name": c, "type": t.name, "description": None}
             for c, t in zip(data.columns, data.dtypes)
@@ -87,7 +84,9 @@ class MetaData:
         raise ValueError(f"other must be of type Path or str, got {type(other)}")
 
     def __str__(self):
-        return f"MetaData(\n\t{self.uuid[:4]=}\n\t{self.path=}\n\t{self.input_files=}\n)"
+        return (
+            f"MetaData(\n\t{self.uuid[:4]=}\n\t{self.path=}\n\t{self.input_files=}\n)"
+        )
 
     def __repr__(self):
         return self.__str__()
@@ -109,11 +108,6 @@ def get_file(files: list[dict], path: Path):
 
 def get_file_md(files: list[MetaData], path: Path):
     return next(
-        (
-            f
-            for f in files
-            if f.path.full_path_from_root
-            == path.full_path_from_root
-        ),
+        (f for f in files if f.path.full_path_from_root == path.full_path_from_root),
         None,
     )

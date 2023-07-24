@@ -153,7 +153,7 @@ def test_save_merge():
     assert os.path.exists("./data/es/step_merge_left/merged.csv")
     assert os.path.exists("./data/es/step_merge/v_202307241247/metadata.json")
     assert os.path.exists("./data/es/step_merge_left/metadata.json")
-    s = Step.from_file("./data/es/step_merge/v_202307241247/metadata.json")
+    s = Step._from_file("./data/es/step_merge/v_202307241247/metadata.json")
     assert len(s.data_l) == 4, f"{len(s.data_l)=}, {s.data_l=}"
     assert len(s.data_l_in) == 2, f"{len(s.data_l_in)=}, {s.data_l_in=}"
 
@@ -186,7 +186,7 @@ def test_2_step():
     assert os.path.exists("./data/global/step_es_fr_merge/v_0/merged_g.csv")
     assert os.path.exists("./data/global/step_es_fr_merge/v_0/metadata.json")
 
-    s = Step.from_file("data/global/step_es_fr_merge/v_0/metadata.json")
+    s = Step._from_file("data/global/step_es_fr_merge/v_0/metadata.json")
     assert len(s.data_l) == 5, f"{len(s.data_l)=}, {s.data_l=}"
     assert len(s.data_l_in) == 2, f"{len(s.data_l_in)=}, {s.data_l_in=}"
 
@@ -195,7 +195,3 @@ if __name__ == "__main__":
     test_export()
     test_save_merge()
     test_2_step()
-
-
-
-
