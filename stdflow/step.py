@@ -5,12 +5,13 @@ import json
 import logging
 import os
 import uuid
+import warnings
 from datetime import datetime
 from typing import Optional, Union
 
 import pandas as pd
 
-from stdflow.config import DATE_VERSION_FORMAT
+from stdflow.config import DATE_VERSION_FORMAT, INFER
 from stdflow.metadata import MetaData, get_file, get_file_md
 from stdflow.path import Path
 from stdflow.utils import to_html
@@ -73,15 +74,15 @@ class Step:
         self._path_in: str | list[str] | None = None
         self._file_in: str | None = None
         self._method_in: str | object | None = None
-        self._data_root_path_in: str | None = None
+        self._root_in: str | None = None
 
         self._step_out: str | None = None
         self._version_out: str | None = None
         self._path_out: str | list[str] | None = None
         self._file_name_out: str | None = None
         self._method_out: str | object | None = None
-        self._data_root_path_out: str | None = None
-        self._data_root_path: str | None = None
+        self._root_out: str | None = None
+        self._root: str | None = None
 
     def __dict__(self):
         return dict(
@@ -97,14 +98,9 @@ class Step:
 
         def get_input_files(files: list[MetaData]) -> list[str]:
             uuids = list(
-                set(
-                    [
-                        item["uuid"]
-                        for sublist in [e.input_files for e in files]
-                        for item in sublist
-                    ]
-                )
+                {item["uuid"] for sublist in [e.input_files for e in files] for item in sublist}
             )
+
             if not len(uuids):
                 return []
             return uuids + get_input_files([e for e in self.data_l if e.uuid in uuids])
@@ -124,22 +120,16 @@ class Step:
         step = cls()
         step.data_l = [MetaData.from_dict(e) for e in d["files"]]
         # data_l_in are input_files of files that are never used as input_files
-        input_files = set(
-            [
-                item["uuid"]
-                for sublist in [e.input_files for e in step.data_l]
-                for item in sublist
-            ]
-        )
+        input_files = {
+            item["uuid"] for sublist in [e.input_files for e in step.data_l] for item in sublist
+        }
         generated_files = [e for e in step.data_l if e.uuid not in input_files]
         step.data_l_in = list(
-            set(
-                [
-                    item["uuid"]
-                    for sublist in [e.input_files for e in generated_files]
-                    for item in sublist
-                ]
-            )
+            {
+                item["uuid"]
+                for sublist in [e.input_files for e in generated_files]
+                for item in sublist
+            }
         )
         step.data_l_in = [e for e in step.data_l if e.uuid in step.data_l_in]
         return step
@@ -178,61 +168,65 @@ class Step:
         self.data_l_in: list[MetaData] = []  # direct input to this step file
         # ================ #
 
-        # All step level attributes are optional. If set, they will replace empty values in load and save functions
+        # Default values of load and save functions
         self._step_in: str | None = None
-        self._version_in: str | None = None
+        self._version_in: str | None = ":last"
         self._path_in: str | list[str] | None = None
         self._file_in: str | None = None
-        self._method_in: str | object | None = None
-        self._data_root_path_in: str | None = None
+        self._method_in: str | object | None = ":auto"  # TODO
+        self._root_in: str | None = ":default"
 
         self._step_out: str | None = None
-        self._version_out: str | None = None
+        self._version_out: str | None = (
+            f":strftime {DATE_VERSION_FORMAT}"  # TODO  date_string = date_string.split(" ")[1]
+        )
         self._path_out: str | list[str] | None = None
         self._file_name_out: str | None = None
-        self._method_out: str | object | None = None
-        self._data_root_path_out: str | None = None
-        self._data_root_path: str | None = None
+        self._method_out: str | object | None = ":auto"
+        self._root_out: str | None = ":default"
+
+        self._root: str | None = "./data"
 
     # TODO fix this ugly function
     def load(
         self,
-        data_root_path: str,
-        method: str | object = "auto",
-        path: list | str = None,
-        step: str = None,
-        version: str | None = "last",
-        file_name: str = True,
-        *args,
+        *,
+        root: str = ":default",
+        path: list | str | None = ":default",
+        step: str | None = ":default",
+        version: str | None = ":last",
+        file_name: str = ":auto",
+        method: str | object = ":auto",
         **kwargs,
     ) -> pd.DataFrame:
         """
-        :param data_root_path: first part of the path to the root data folder that is not to export in metadata
+        :param root: path to the root data folder. not exported in metadata.
+        :param file_name: input file name
         :param method: method to load the data to use. e.g. pd.read_csv, pd.read_excel, pd.read_parquet, ... or "csv" to use default csv...
             Method must use path as the first argument
         :param path: path from data folder to file. (optionally include step and version)
-        :param step: if True: present in path
-        :param version: if True: present in path. last part of the full_path. one of ["last", "first", "<version_name>", None]
-        :param file_name: if True: present in path. file name
-        :param args: args to send to the method
+        :param step: input step name
+        :param version: input version name. one of [":last", ":first", "<version_name>", None]
         :param kwargs: kwargs to send to the method
         :return:
         """
+
+        def get_arg_value(arg, default):
+            if arg == ":default":
+                return default
+            return arg
+
         # if arguments are None, use step level arguments
-        data_root_path = (
-            data_root_path or self._data_root_path_in or self._data_root_path
-        )
-        path = path or self._path_in
-        file_name = file_name or self._file_in
-        step = step or self._step_in
-        version = version or self._version_in
-        method = method or self._method_in
+        root = get_arg_value(get_arg_value(root, self._root_in), self._root)
+        path = get_arg_value(path, self._path_in)
+        file_name = get_arg_value(file_name, self._file_in)
+        step = get_arg_value(step, self._step_in)
+        version = get_arg_value(version, self._version_in)
+        method = get_arg_value(method, self._method_in)
 
-        path_obj = Path.from_input_params(
-            data_root_path, path, step, version, file_name
-        )
+        path_obj = Path.from_input_params(root, path, step, version, file_name)
 
-        if method == "auto":
+        if method == ":auto":
             method = path_obj.extension
         if isinstance(method, str):
             if method not in loaders:
@@ -240,7 +234,7 @@ class Step:
             method = loaders[method]
 
         # Load data
-        data = method(path_obj.full_path, *args, **kwargs)
+        data = method(path_obj.full_path, **kwargs)
 
         # Add metadata
         previous_step = Step._from_path(path_obj)
@@ -267,11 +261,10 @@ class Step:
             if md in [f for f in self.data_l]:  # file already added: same uuid
                 # logger.debug(f"File {md} already added. Skipping")
                 pass
-            elif md.path.full_path_from_root in [
-                f.path.full_path_from_root for f in self.data_l
-            ]:
-                logger.warning(
-                    f"Replacing {md} by {file} as they have the same path but not the same uuid"
+            elif md.path.full_path_from_root in [f.path.full_path_from_root for f in self.data_l]:
+                warnings.warn(
+                    f"Replacing {md} by {file} as they have the same path but not the same uuid",
+                    category=ResourceWarning,
                 )
                 to_rm = [
                     f
@@ -293,19 +286,19 @@ class Step:
     def save(
         self,
         data: pd.DataFrame,
-        data_root_path: str = None,
-        method: str | object = "auto",
+        *,
+        root: str = None,
+        method: str | object = ":auto",
         path: list | str = None,
         step: str = None,
         version: str = None,
         file_name: str = None,
         html_export: bool = True,
-        *args,
         **kwargs,
     ):
         """
         :param data: data to save
-        :param data_root_path: first part of the path to the root data folder that is not to export in metadata
+        :param root: first part of the path to the root data folder that is not to export in metadata
         :param method: method to load the data to use. e.g. pd.read_csv, pd.read_excel, pd.read_parquet, ... or "csv" to use default csv...
             Method must use path as the first argument
         :param path: path from data folder to file. (optionally include step, version and file name)
@@ -313,14 +306,11 @@ class Step:
         :param version: last part of the full_path. one of ["new", "<version_name>", None]
         :param file_name: file name
         :param html_export: if True, export html view of the data and the pipeline it comes from
-        :param args: args to send to the method
         :param kwargs: kwargs to send to the method
         :return:
         """
         # if arguments are None, use step level arguments
-        data_root_path = (
-            data_root_path or self._data_root_path_out or self._data_root_path
-        )
+        root = root or self._root_out or self._root
         path = path or self._path_out or self._path_in
         step = step or self._step_out
         version = version or self._version_out
@@ -329,13 +319,13 @@ class Step:
         file = file_name or self._file_name_out
         method = method or self._method_out
 
-        path_obj = Path.from_input_params(data_root_path, path, step, version, file)
+        path_obj = Path.from_input_params(root, path, step, version, file)
 
         # if the directory does not exist, create it recursively
         if not os.path.exists(path_obj.dir_path):
             os.makedirs(path_obj.dir_path)
 
-        if method == "auto":
+        if method == ":auto":
             method = path_obj.extension
         if isinstance(method, str):
             if method not in savers:
@@ -343,11 +333,120 @@ class Step:
             method = savers[method]
 
         # Save data
-        method(data, path_obj.full_path, *args, **kwargs)
+        method(data, path_obj.full_path, **kwargs)
 
-        self.data_l.append(
-            MetaData.from_data(path_obj, data, method.__str__(), self.data_l_in)
-        )
+        self.data_l.append(MetaData.from_data(path_obj, data, method.__str__(), self.data_l_in))
         self._to_file(path_obj)
         if html_export:
             to_html(path_obj.metadata_path, path_obj.dir_path)
+
+    # === Properties === #
+
+    @property
+    def step_in(self) -> str:
+        return self._step_in
+
+    @step_in.setter
+    def step_in(self, step_name: str) -> None:
+        self._step_in = step_name
+
+    @property
+    def version_in(self) -> str:
+        return self._version_in
+
+    @version_in.setter
+    def version_in(self, version_name: str) -> None:
+        self._version_in = version_name
+
+    @property
+    def path_in(self) -> list | str:
+        return self._path_in
+
+    @path_in.setter
+    def path_in(self, path: list | str) -> None:
+        self._path_in = path
+
+    @property
+    def file_in(self) -> str:
+        return self._file_in
+
+    @file_in.setter
+    def file_in(self, file_name: str) -> None:
+        self._file_in = file_name
+
+    @property
+    def method_in(self) -> str | object:
+        return self._method_in
+
+    @method_in.setter
+    def method_in(self, method: str | object) -> None:
+        self._method_in = method
+
+    @property
+    def root_in(self) -> str:
+        return self._root_in
+
+    @root_in.setter
+    def root_in(self, root: str) -> None:
+        self._root_in = root
+
+    @property
+    def step_out(self) -> str:
+        return self._step_out
+
+    @step_out.setter
+    def step_out(self, step_name: str) -> None:
+        self._step_out = step_name
+
+    @property
+    def version_out(self) -> str:
+        return self._version_out
+
+    @version_out.setter
+    def version_out(self, version_name: str) -> None:
+        self._version_out = version_name
+
+    @property
+    def path_out(self) -> list | str:
+        return self._path_out
+
+    @path_out.setter
+    def path_out(self, path: list | str) -> None:
+        self._path_out = path
+
+    @property
+    def file_name_out(self) -> str:
+        return self._file_name_out
+
+    @file_name_out.setter
+    def file_name_out(self, file_name: str) -> None:
+        self._file_name_out = file_name
+
+    @property
+    def method_out(self) -> str | object:
+        return self._method_out
+
+    @method_out.setter
+    def method_out(self, method: str | object) -> None:
+        self._method_out = method
+
+    @property
+    def root_out(self) -> str:
+        return self._root_out
+
+    @root_out.setter
+    def root_out(self, root: str) -> None:
+        self._root_out = root
+
+    @property
+    def root(self) -> str:
+        return self._root
+
+    @root.setter
+    def root(self, root: str) -> None:
+        self._root = root
+
+
+
+
+

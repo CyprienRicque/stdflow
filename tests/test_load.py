@@ -87,17 +87,13 @@ def test_load():
         sf.Step()
     )  # only necessary when doing custom pipeline, otherwise functions are accessible at package level
 
-    df = step.load("./data", path="fr", step="raw", version="1", file_name="random.csv")
+    df = step.load(root="./data", path="fr", step="raw", version="1", file_name="random.csv")
     assert df.shape == (100, 4)
 
-    df = step.load(
-        "./data", path="fr", step="raw", version="last", file_name="random.csv"
-    )
+    df = step.load(root="./data", path="fr", step="raw", version=":last", file_name="random.csv")
     assert df.shape == (100, 4)
 
-    df = step.load(
-        "./data", path="fr", step="raw", method=pd.read_csv, file_name="random.csv"
-    )
+    df = step.load(root="./data", path="fr", step="raw", method=pd.read_csv, file_name="random.csv")
     assert df.shape == (100, 4)
 
 
@@ -106,16 +102,14 @@ def test_load_no_version():
         sf.Step()
     )  # only necessary when doing custom pipeline, otherwise functions are accessible at package level
 
-    df = step.load(
-        "./data", path="es", step="raw", version=None, file_name="random.csv"
-    )
+    df = step.load(root="./data", path="es", step="raw", version=None, file_name="random.csv")
     assert df.shape == (100, 5)
 
 
 def test_load_no_v_no_s():
     step = sf.Step()
 
-    df = step.load("./data", path="es", file_name="random_base.csv")
+    df = step.load(root="./data", path="es", file_name="random_base.csv")
     assert df.shape == (100, 2)
 
 

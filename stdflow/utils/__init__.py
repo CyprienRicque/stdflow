@@ -11,18 +11,12 @@ from stdflow.config import STEP_PREFIX, VERSION_PREFIX
 
 def detect_folders(path: str, prefix: str) -> list:
     full_path_versions = sorted(glob.glob(os.path.join(path, f"{prefix}*")))
-    suffixes = [
-        os.path.basename(v)[len(prefix) :]
-        for v in full_path_versions
-        if os.path.isdir(v)
-    ]
+    suffixes = [os.path.basename(v)[len(prefix) :] for v in full_path_versions if os.path.isdir(v)]
     return suffixes
 
 
 def retrieve_from_path(path: str, prefix: str) -> str:
-    version = [
-        part[len(prefix) :] for part in path.split(os.sep) if part.startswith(prefix)
-    ]
+    version = [part[len(prefix) :] for part in path.split(os.sep) if part.startswith(prefix)]
     return version[-1] if version else None
 
 
@@ -46,9 +40,7 @@ def remove_dir(path, dir_to_remove):
     path_parts = []
 
     # Keep splitting the path until you reach the top
-    while path != os.path.dirname(
-        path
-    ):  # os.path.dirname(path) returns the directory part of path
+    while path != os.path.dirname(path):  # os.path.dirname(path) returns the directory part of path
         path, tail = os.path.split(path)
         if tail == dir_to_remove:
             # Skip the directory to be removed
@@ -70,9 +62,7 @@ def get_pipeline(metadata, dest):
             print(f"{input_file['uuid']=}")
             print([f["uuid"] for f in metadata["files"]])
 
-            input_file = [
-                f for f in metadata["files"] if f["uuid"] == input_file["uuid"]
-            ][0]
+            input_file = [f for f in metadata["files"] if f["uuid"] == input_file["uuid"]][0]
             dot.edge(input_file["file_name"], file["file_name"])
 
     # Save the graph in DOT format

@@ -90,13 +90,12 @@ def test_export():
         sf.Step()
     )  # only necessary when doing custom pipeline, otherwise functions are accessible at package level
 
-    df = step.load("./data", path="fr", step="raw", version="1", file_name="random.csv")
+    df = step.load(root="./data", path="fr", step="raw", version="1", file_name="random.csv")
     assert df.shape == (100, 4)
 
     df["new_col"] = "new_col"
     step.save(
         df,
-        "./data",
         path="fr",
         step="with_new_col",
         version="1",
@@ -122,23 +121,20 @@ def test_export():
 
 #
 def test_save_merge():
-    step = (
-        sf.Step()
-    )  # only necessary when doing custom pipeline, otherwise functions are accessible at package level
+    step = sf.Step()
+    step._root = "./data"
 
     # sf.storage = "g"
 
-    df1 = step.load(
-        "./data", path="es", step="raw", version=None, file_name="random.csv"
-    )
+    df1 = step.load(path="es", step="raw", version=None, file_name="random.csv")
     assert df1.shape == (100, 5)
 
-    df2 = step.load("./data", path="es", file_name="random_base.csv")
+    df2 = step.load(path="es", file_name="random_base.csv")
     assert df2.shape == (100, 2)
 
     df_full = pd.merge(df1, df2, on="id", how="left")
 
-    step.save(df_full, "./data", path="es", step="merge_left", file_name="merged.csv")
+    step.save(df_full, path="es", step="merge_left", file_name="merged.csv")
     assert os.path.exists("./data/es/step_merge_left/merged.csv")
 
     step.save(
@@ -170,9 +166,7 @@ def test_2_step():
         version="v_202307241247",
         file_name="merged.csv",
     )
-    df2 = step.load(
-        "./data", path="fr", step="raw", version="1", file_name="random.csv"
-    )
+    df2 = step.load("./data", path="fr", step="raw", version="1", file_name="random.csv")
 
     df_full = pd.merge(df1, df2, on="id", how="left")
     step.save(

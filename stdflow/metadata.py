@@ -84,9 +84,7 @@ class MetaData:
         raise ValueError(f"other must be of type Path or str, got {type(other)}")
 
     def __str__(self):
-        return (
-            f"MetaData(\n\t{self.uuid[:4]=}\n\t{self.path=}\n\t{self.input_files=}\n)"
-        )
+        return f"MetaData(\n\t{self.uuid[:6]=}\n\t{self.path=}\n\t{self.input_files=}\n)"
 
     def __repr__(self):
         return self.__str__()
@@ -97,9 +95,7 @@ def get_file(files: list[dict], path: Path):
         (
             f
             for f in files
-            if Path.from_dict(
-                f["step"], f["file_name"], f["file_type"]
-            ).full_path_from_root
+            if Path.from_dict(f["step"], f["file_name"], f["file_type"]).full_path_from_root
             == path.full_path_from_root
         ),
         None,

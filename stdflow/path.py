@@ -19,18 +19,18 @@ logger.setLevel(logging.DEBUG)
 class Path:
     def __init__(
         self,
-        data_root_path: str | None = "./data",
+        root: str | None = "./data",
         path=None,
         step_name=None,
-        version="last",
+        version=":last",
         file_name=None,
     ):
         """
         At this stage all information are present except the version which is to be detected if not specified
-        :param data_root_path: first part of the full_path
+        :param root: first part of the full_path
         :param path: seconds parts of the full_path (optional)
         :param step_name: third part of the full_path (optional)
-        :param version: last part of the full_path. one of ["last", "first", "<version_name>", None]
+        :param version: last part of the full_path. one of [":last", ":first", "<version_name>", None]
         :param file_name: file name (optional)
         """
         # if step is str and contains step_, remove it
@@ -40,13 +40,13 @@ class Path:
         if isinstance(version, str) and version.startswith(VERSION_PREFIX):
             version = version[len(VERSION_PREFIX) :]
 
-        self.data_root_path = data_root_path
+        self.root = root
         self.path: str = "/".join(path) if isinstance(path, list) else path
         self.step_name = step_name
         self.file_name = file_name
 
         self.version = None
-        if version in ["last", "first"]:
+        if version in [":last", ":first"]:
             if not os.path.isdir(self.dir_path):
                 logger.error(f"Path {self.dir_path} does not exist")
             self.version = self.detect_version(self.dir_path, version)
@@ -75,11 +75,11 @@ class Path:
     #     path = remove_dir(path, fstep(step)) if step else path
     #
     #     return cls(
-    #         data_root_path=path, step_name=step, version=version, file_name=file_name
+    #         root=path, step_name=step, version=version, file_name=file_name
     #     )
 
     def detect_version(self, path, version_type):
-        if version_type not in ["last", "first"]:
+        if version_type not in [":last", ":first"]:
             logger.warning(f"Unknown version type: {version_type}")
         # Check for versioned directories
         versions = detect_folders(path, VERSION_PREFIX)
@@ -88,9 +88,9 @@ class Path:
         if not versions:
             logger.warning(f"No versioned directories found in {path}")
 
-        if version_type == "last":
+        if version_type == ":last":
             return versions[-1] if versions else None
-        elif version_type == "first":
+        elif version_type == ":first":
             return versions[0] if versions else None
 
         return None
@@ -98,7 +98,7 @@ class Path:
     @property
     def full_path(self):
         return Path.full_path_(
-            self.data_root_path,
+            self.root,
             self.path,
             fstep(self.step_name) if self.step_name else "",
             fv(self.version) if self.version else "",
@@ -118,7 +118,7 @@ class Path:
     @property
     def dir_path(self):
         return Path.full_path_(
-            self.data_root_path,
+            self.root,
             self.path,
             fstep(self.step_name) if self.step_name else "",
             fv(self.version) if self.version else "",
@@ -128,7 +128,7 @@ class Path:
     @property
     def step_dir(self):
         return Path.full_path_(
-            self.data_root_path,
+            self.root,
             self.path,
             fstep(self.step_name) if self.step_name else None,
             None,
@@ -136,10 +136,8 @@ class Path:
         )
 
     @staticmethod
-    def full_path_(data_root_path, path, step, version, file_name):
-        return os.path.join(
-            data_root_path or "", path or "", step or "", version or "", file_name or ""
-        )
+    def full_path_(root, path, step, version, file_name):
+        return os.path.join(root or "", path or "", step or "", version or "", file_name or "")
 
     @property
     def extension(self):
@@ -156,7 +154,7 @@ class Path:
     @classmethod
     def from_dict(cls, step_dict, file_name, file_type):
         return cls(
-            data_root_path=None,
+            root=None,
             path=step_dict["path"],
             step_name=step_dict["step_name"],
             version=step_dict["version"],
@@ -168,7 +166,7 @@ class Path:
         return os.path.join(self.dir_path, "metadata.json")
 
     @classmethod
-    def from_input_params(cls, data_root_path, path, step, version, file_name):
+    def from_input_params(cls, root, path, step, version, file_name):
         # if step is True:
         #     # extract step from path
         #     step = retrieve_from_path(path, STEP_PREFIX)
@@ -183,7 +181,7 @@ class Path:
         #     path = os.path.dirname(path)
 
         return cls(
-            data_root_path=data_root_path,
+            root=root,
             path=path,
             step_name=step,
             version=version,
@@ -198,7 +196,5 @@ class Path:
 
 
 if __name__ == "__main__":
-    path = Path("./data", path="fr", step_name="raw", version="last")
-    assert (
-        path.full_path == "./data/fr/step_raw/v_2/"
-    ), f"src.full_path: {path.full_path}"
+    path = Path("./data", path="fr", step_name="raw", version=":last")
+    assert path.full_path == "./data/fr/step_raw/v_2/", f"src.full_path: {path.full_path}"
