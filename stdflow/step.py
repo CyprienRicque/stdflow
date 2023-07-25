@@ -7,14 +7,15 @@ import os
 import uuid
 import warnings
 from datetime import datetime
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 
 import pandas as pd
 
-from stdflow.config import DATE_VERSION_FORMAT, INFER
+from stdflow.config import DEFAULT_DATE_VERSION_FORMAT, INFER
 from stdflow.metadata import MetaData, get_file, get_file_md
 from stdflow.path import Path
-from stdflow.utils import to_html
+from stdflow.types.strftime_type import Strftime
+from stdflow.utils import get_arg_value, to_html
 
 logger = logging.getLogger(__name__)
 
@@ -68,21 +69,205 @@ class Step:
         self.data_l_in: list[MetaData] = []  # direct input to this step file
         # ================ #
 
-        # All step level attributes are optional. If set, they will replace empty values in load and save functions
+        # Default values of load and save functions
         self._step_in: str | None = None
-        self._version_in: str | None = None
-        self._path_in: str | list[str] | None = None
-        self._file_in: str | None = None
-        self._method_in: str | object | None = None
-        self._root_in: str | None = None
+        self._version_in: str | None = ":last"
+        self._attrs_in: str | list[str] | None = None
+        self._file_name_in: str | None = ":auto"  # TODO
+        self._method_in: str | object | None = ":auto"  # TODO
+        self._root_in: str | None = ":default"
 
         self._step_out: str | None = None
-        self._version_out: str | None = None
-        self._path_out: str | list[str] | None = None
+        self._version_out: str | None = DEFAULT_DATE_VERSION_FORMAT
+        self._attrs_out: str | list[str] | None = None
         self._file_name_out: str | None = None
-        self._method_out: str | object | None = None
-        self._root_out: str | None = None
-        self._root: str | None = None
+        self._method_out: str | object | None = ":auto"
+        self._root_out: str | None = ":default"
+
+        self._root: str | None = "./data"
+
+    # TODO fix this ugly function
+    def load(
+        self,
+        *,
+        root: str | Literal[":default"] = ":default",
+        attrs: list | str | None | Literal[":default"] = ":default",
+        step: str | None | Literal[":default"] = ":default",
+        version: str | None | Literal[":default", ":last", ":first"] = ":default",
+        file_name: str | Literal[":default", ":auto"] = ":default",
+        method: str | object | Literal[":default", ":auto"] = ":default",
+        verbose: bool = False,
+        **kwargs,
+    ) -> pd.DataFrame:
+        """
+        :param verbose:
+        :param root: path to the root data folder. not exported in metadata.
+        :param file_name: input file name
+        :param method: method to load the data to use. e.g. pd.read_csv, pd.read_excel, pd.read_parquet, ... or "csv" to use default csv...
+            Method must use path as the first argument
+        :param attrs: path from data folder to file. (optionally include step and version)
+        :param step: input step name
+        :param version: input version name. one of [":last", ":first", "<version_name>", None]
+        :param kwargs: kwargs to send to the method
+        :return:
+        """
+        # if arguments are None, use step level arguments
+        root = get_arg_value(get_arg_value(root, self._root_in), self._root)
+        attrs = get_arg_value(attrs, self._attrs_in)
+        file_name = get_arg_value(file_name, self._file_name_in)
+        step = get_arg_value(step, self._step_in)
+        version = get_arg_value(version, self._version_in)
+        method = get_arg_value(method, self._method_in)
+
+        path = Path.from_input_params(root, attrs, step, version, file_name)
+
+        if method == ":auto":
+            method = path.extension
+        if isinstance(method, str):
+            if method not in loaders:
+                raise ValueError(f"method {method} not in {list(loaders.keys())}")
+            method = loaders[method]
+
+        # Load data
+        data = method(path.full_path, **kwargs)
+
+        # Add metadata
+        previous_step = Step._from_path(path)
+        if not previous_step:
+            file_loaded = MetaData.from_data(path, data)
+            new_files = [file_loaded]
+        else:
+            file_loaded = get_file_md(previous_step.data_l, path)
+            if not file_loaded:
+                warnings.warn(
+                    f"metadata file found but file {path.full_path} not present in it."
+                    f"Quick fix: change the file location as it was not generated the same way as other files "
+                    f"in this folder. current behavior: Using the file as coming from no previous files",
+                    category=ResourceWarning,
+                )
+                file_loaded = MetaData.from_data(path, data)
+                new_files = [file_loaded]
+            else:
+                new_files = previous_step._files_needed_to_gen([file_loaded]) + [file_loaded]
+
+        # do not add the same file twice in self.data_l
+        # 1. Keep the file one if same uuid
+        # 2. Replace the file if same full_path
+        for new_file in new_files:
+            if new_file in [f for f in self.data_l]:  # file already added: same uuid
+                # logger.debug(f"File {md} already added. Skipping")
+                pass
+            elif new_file.path.full_path_from_root in [
+                f.path.full_path_from_root for f in self.data_l
+            ]:
+                warnings.warn(
+                    f"Replacing {new_file} by {file_loaded} as they have the same path but not the same uuid",
+                    category=ResourceWarning,
+                )
+                to_rm = [
+                    f
+                    for f in self.data_l
+                    if f.path.full_path_from_root == new_file.path.full_path_from_root
+                ]
+                assert len(to_rm) == 1
+                to_rm = to_rm[0]
+                self.data_l.remove(to_rm)
+                self.data_l.append(new_file)
+                if new_file == file_loaded:
+                    if to_rm in self.data_l_in:
+                        self.data_l_in.remove(to_rm)
+                    self.data_l_in.append(new_file)
+            else:
+                self.data_l.append(new_file)
+                if new_file == file_loaded:
+                    self.data_l_in.append(new_file)
+
+        return data
+
+    def save(
+        self,
+        data: pd.DataFrame,
+        *,
+        root: str | Literal[":default"] = ":default",
+        attrs: list | str | None | Literal[":default"] = ":default",
+        step: str | None | Literal[":default"] = ":default",
+        version: str | None | Literal[":default"] | Strftime = ":default",
+        file_name: str | Literal[":default", ":auto"] = ":default",
+        method: str | object | Literal[":default", ":auto"] = ":default",
+        html_export: bool = ":default",
+        verbose: bool = False,
+        **kwargs,
+    ):
+        """
+        :param data: data to save
+        :param root: first part of the path to the root data folder that is not to export in metadata
+        :param method: method to load the data to use. e.g. pd.read_csv, pd.read_excel, pd.read_parquet, ... or "csv" to use default csv...
+            Method must use path as the first argument
+        :param attrs: path from data folder to file. (optionally include step, version and file name)
+        :param step: step
+        :param version: last part of the full_path. one of [strftime str, "<version_name>", None]
+        :param file_name: file name
+        :param html_export: if True, export html view of the data and the pipeline it comes from
+        :param verbose:
+        :param kwargs: kwargs to send to the method
+        :return:
+        """
+        # if arguments are None, use step level arguments
+        root = get_arg_value(get_arg_value(root, self._root_out), self._root)
+        attrs = get_arg_value(attrs, self._attrs_out)
+        step = get_arg_value(step, self._step_out)
+        version = get_arg_value(version, self._version_out)
+        file = get_arg_value(file_name, self._file_name_out)
+        method = get_arg_value(method, self._method_out)
+
+        if Strftime.__call__(version):
+            version = datetime.now().strftime(version)
+
+        path = Path.from_input_params(root, attrs, step, version, file)
+
+        # if the directory does not exist, create it recursively
+        if not os.path.exists(path.dir_path):
+            os.makedirs(path.dir_path)
+
+        if method == ":auto":
+            method = path.extension
+        if isinstance(method, str):
+            if method not in savers:
+                raise ValueError(f"method {method} not in {list(savers.keys())}")
+            method = savers[method]
+
+        # Save data
+        method(data, path.full_path, **kwargs)
+
+        self.data_l.append(MetaData.from_data(path, data, method.__str__(), self.data_l_in))
+        self._to_file(path)
+        if html_export:
+            to_html(path.metadata_path, path.dir_path)
+
+    def reset(self):  # TODO
+        # === Exported === #
+        self.data_l: list[MetaData] = []
+        self.data_l_in: list[MetaData] = []  # direct input to this step file
+        # ================ #
+
+        # Default values of load and save functions
+        self._step_in: str | None = None
+        self._version_in: str | None = ":last"
+        self._attrs_in: str | list[str] | None = None
+        self._file_name_in: str | None = ":auto"  # TODO
+        self._method_in: str | object | None = ":auto"  # TODO
+        self._root_in: str | None = ":default"
+
+        self._step_out: str | None = None
+        self._version_out: str | None = f":strftime {DEFAULT_DATE_VERSION_FORMAT}"  # TODO  date_string = date_string.split(" ")[1]
+        self._attrs_out: str | list[str] | None = None
+        self._file_name_out: str | None = None
+        self._method_out: str | object | None = ":auto"
+        self._root_out: str | None = ":default"
+
+        self._root: str | None = "./data"
+
+    # === Private === #
 
     def __dict__(self):
         return dict(
@@ -162,184 +347,6 @@ class Step:
             logger.debug(f"metadata: {self.__dict__()}")
             json.dump(self.__dict__(), f)
 
-    def reset(self):
-        # === Exported === #
-        self.data_l: list[MetaData] = []
-        self.data_l_in: list[MetaData] = []  # direct input to this step file
-        # ================ #
-
-        # Default values of load and save functions
-        self._step_in: str | None = None
-        self._version_in: str | None = ":last"
-        self._path_in: str | list[str] | None = None
-        self._file_in: str | None = None
-        self._method_in: str | object | None = ":auto"  # TODO
-        self._root_in: str | None = ":default"
-
-        self._step_out: str | None = None
-        self._version_out: str | None = (
-            f":strftime {DATE_VERSION_FORMAT}"  # TODO  date_string = date_string.split(" ")[1]
-        )
-        self._path_out: str | list[str] | None = None
-        self._file_name_out: str | None = None
-        self._method_out: str | object | None = ":auto"
-        self._root_out: str | None = ":default"
-
-        self._root: str | None = "./data"
-
-    # TODO fix this ugly function
-    def load(
-        self,
-        *,
-        root: str = ":default",
-        path: list | str | None = ":default",
-        step: str | None = ":default",
-        version: str | None = ":last",
-        file_name: str = ":auto",
-        method: str | object = ":auto",
-        **kwargs,
-    ) -> pd.DataFrame:
-        """
-        :param root: path to the root data folder. not exported in metadata.
-        :param file_name: input file name
-        :param method: method to load the data to use. e.g. pd.read_csv, pd.read_excel, pd.read_parquet, ... or "csv" to use default csv...
-            Method must use path as the first argument
-        :param path: path from data folder to file. (optionally include step and version)
-        :param step: input step name
-        :param version: input version name. one of [":last", ":first", "<version_name>", None]
-        :param kwargs: kwargs to send to the method
-        :return:
-        """
-
-        def get_arg_value(arg, default):
-            if arg == ":default":
-                return default
-            return arg
-
-        # if arguments are None, use step level arguments
-        root = get_arg_value(get_arg_value(root, self._root_in), self._root)
-        path = get_arg_value(path, self._path_in)
-        file_name = get_arg_value(file_name, self._file_in)
-        step = get_arg_value(step, self._step_in)
-        version = get_arg_value(version, self._version_in)
-        method = get_arg_value(method, self._method_in)
-
-        path_obj = Path.from_input_params(root, path, step, version, file_name)
-
-        if method == ":auto":
-            method = path_obj.extension
-        if isinstance(method, str):
-            if method not in loaders:
-                raise ValueError(f"method {method} not in {list(loaders.keys())}")
-            method = loaders[method]
-
-        # Load data
-        data = method(path_obj.full_path, **kwargs)
-
-        # Add metadata
-        previous_step = Step._from_path(path_obj)
-        if not previous_step:
-            file = MetaData.from_data(path_obj, data)
-            mds = [file]
-        else:
-            file = get_file_md(previous_step.data_l, path_obj)
-            if not file:
-                logger.warning(
-                    f"metadata file found but file {path_obj.full_path} not present in it."
-                    f"Quick fix: change the file location as it was not generated the same way as other files "
-                    f"in this folder. current behavior: Using the file as coming from no previous files"
-                )
-                file = MetaData.from_data(path_obj, data)
-                mds = [file]
-            else:
-                mds = previous_step._files_needed_to_gen([file]) + [file]
-
-        # do not add the same file twice in self.data_l
-        # 1. Keep the file one if same uuid
-        # 2. Replace the file if same full_path
-        for md in mds:
-            if md in [f for f in self.data_l]:  # file already added: same uuid
-                # logger.debug(f"File {md} already added. Skipping")
-                pass
-            elif md.path.full_path_from_root in [f.path.full_path_from_root for f in self.data_l]:
-                warnings.warn(
-                    f"Replacing {md} by {file} as they have the same path but not the same uuid",
-                    category=ResourceWarning,
-                )
-                to_rm = [
-                    f
-                    for f in self.data_l
-                    if f.path.full_path_from_root == md.path.full_path_from_root
-                ][0]
-                self.data_l.remove(to_rm)
-                self.data_l.append(md)
-                if md == file:
-                    self.data_l_in.remove(to_rm)
-                    self.data_l_in.append(md)
-            else:
-                self.data_l.append(md)
-                if md == file:
-                    self.data_l_in.append(md)
-
-        return data
-
-    def save(
-        self,
-        data: pd.DataFrame,
-        *,
-        root: str = None,
-        method: str | object = ":auto",
-        path: list | str = None,
-        step: str = None,
-        version: str = None,
-        file_name: str = None,
-        html_export: bool = True,
-        **kwargs,
-    ):
-        """
-        :param data: data to save
-        :param root: first part of the path to the root data folder that is not to export in metadata
-        :param method: method to load the data to use. e.g. pd.read_csv, pd.read_excel, pd.read_parquet, ... or "csv" to use default csv...
-            Method must use path as the first argument
-        :param path: path from data folder to file. (optionally include step, version and file name)
-        :param step: step
-        :param version: last part of the full_path. one of ["new", "<version_name>", None]
-        :param file_name: file name
-        :param html_export: if True, export html view of the data and the pipeline it comes from
-        :param kwargs: kwargs to send to the method
-        :return:
-        """
-        # if arguments are None, use step level arguments
-        root = root or self._root_out or self._root
-        path = path or self._path_out or self._path_in
-        step = step or self._step_out
-        version = version or self._version_out
-        if version == "new":
-            version = datetime.now().strftime(DATE_VERSION_FORMAT)
-        file = file_name or self._file_name_out
-        method = method or self._method_out
-
-        path_obj = Path.from_input_params(root, path, step, version, file)
-
-        # if the directory does not exist, create it recursively
-        if not os.path.exists(path_obj.dir_path):
-            os.makedirs(path_obj.dir_path)
-
-        if method == ":auto":
-            method = path_obj.extension
-        if isinstance(method, str):
-            if method not in savers:
-                raise ValueError(f"method {method} not in {list(savers.keys())}")
-            method = savers[method]
-
-        # Save data
-        method(data, path_obj.full_path, **kwargs)
-
-        self.data_l.append(MetaData.from_data(path_obj, data, method.__str__(), self.data_l_in))
-        self._to_file(path_obj)
-        if html_export:
-            to_html(path_obj.metadata_path, path_obj.dir_path)
-
     # === Properties === #
 
     @property
@@ -360,19 +367,19 @@ class Step:
 
     @property
     def path_in(self) -> list | str:
-        return self._path_in
+        return self._attrs_in
 
     @path_in.setter
     def path_in(self, path: list | str) -> None:
-        self._path_in = path
+        self._attrs_in = path
 
     @property
-    def file_in(self) -> str:
-        return self._file_in
+    def file_name_in(self) -> str:
+        return self._file_name_in
 
-    @file_in.setter
-    def file_in(self, file_name: str) -> None:
-        self._file_in = file_name
+    @file_name_in.setter
+    def file_name_in(self, file_name: str) -> None:
+        self._file_name_in = file_name
 
     @property
     def method_in(self) -> str | object:
@@ -408,11 +415,11 @@ class Step:
 
     @property
     def path_out(self) -> list | str:
-        return self._path_out
+        return self._attrs_out
 
     @path_out.setter
     def path_out(self, path: list | str) -> None:
-        self._path_out = path
+        self._attrs_out = path
 
     @property
     def file_name_out(self) -> str:
@@ -445,8 +452,3 @@ class Step:
     @root.setter
     def root(self, root: str) -> None:
         self._root = root
-
-
-
-
-

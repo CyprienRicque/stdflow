@@ -49,6 +49,11 @@
 
     addOutputFiles(data);
 
+
+    let maxDepth = 0;
+    const colWidth = 400;
+
+
     updatePage();
 
     function setup_file_text(a, fileInData) {
@@ -62,6 +67,28 @@
     }
 
     function updatePage() {
+        function calculateDepths(file, depth = 0) {
+            if (file.depth === undefined || file.depth < depth) {
+                console.log(file.uuid.substring(0, 5), depth)
+                file.depth = depth;
+            }
+            maxDepth = Math.max(maxDepth, depth);
+
+            // Use output_files instead of input_files
+            file.output_files.forEach(function (outputFile) {
+                calculateDepths(outputFile, depth + 1);
+            });
+        }
+
+        data.files.forEach(function (file) {
+            if (!file.input_files || file.input_files.length === 0) {
+                calculateDepths(file);
+            }
+        });    // Multiple all depth per 2
+        data.files.forEach(function (file) {
+            file.depth = maxDepth - file.depth;
+        });
+
         document.getElementById('name').textContent = currentFile.file_name;
         document.getElementById('type').textContent = 'Type: ' + currentFile.file_type;
         document.getElementById('path').textContent = 'Attributes: ' + currentFile.step.path;
@@ -103,31 +130,6 @@
         });
     }
 
-    let maxDepth = 0;
-    const colWidth = 400;
-
-    function calculateDepths(file, depth = 0) {
-        if (file.depth === undefined || file.depth < depth) {
-            file.depth = depth;
-        }
-        maxDepth = Math.max(maxDepth, depth);
-
-        // Use output_files instead of input_files
-        file.output_files.forEach(function (outputFile) {
-            calculateDepths(outputFile, depth + 1);
-        });
-    }
-
-
-    data.files.forEach(function (file) {
-        if (!file.input_files || file.input_files.length === 0) {
-            calculateDepths(file);
-        }
-    });    // Multiple all depth per 2
-    data.files.forEach(function (file) {
-        file.depth = maxDepth - file.depth;
-    });
-
     var svg = document.getElementById('pipeline');
     svg.style.width = (maxDepth + 1) * colWidth + 'px';  // Adjust svg width based on maxDepth
     data.files.forEach(function (file) {
@@ -163,6 +165,8 @@
             var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             line.setAttribute('x2', (maxDepth - file.depth) * colWidth + (colWidth / 15));
             line.setAttribute('y2', data.files.indexOf(file) * 20 + 15);
+            console.log("set", inputFileInData, "for ", inputFile.uuid.substring(0, 5))
+            console.log("set", inputFileInData.uuid.substring(0, 5), inputFileInData.depth)
             line.setAttribute('x1', (maxDepth - (inputFileInData.depth - 1)) * colWidth - (colWidth / 15));
             line.setAttribute('y1', data.files.indexOf(inputFileInData) * 20 + 15);
             line.style.stroke = 'rgba(0,0,0,0.3)';

@@ -9,6 +9,12 @@ from graphviz import Digraph
 from stdflow.config import STEP_PREFIX, VERSION_PREFIX
 
 
+def get_arg_value(arg, default):
+    if arg == ":default":
+        return default
+    return arg
+
+
 def detect_folders(path: str, prefix: str) -> list:
     full_path_versions = sorted(glob.glob(os.path.join(path, f"{prefix}*")))
     suffixes = [os.path.basename(v)[len(prefix) :] for v in full_path_versions if os.path.isdir(v)]

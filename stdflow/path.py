@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Optional
+from typing import Literal, Optional
 
-from stdflow.config import DATE_VERSION_FORMAT, STEP_PREFIX, VERSION_PREFIX
+from stdflow.config import STEP_PREFIX, VERSION_PREFIX
+from stdflow.types.strftime_type import Strftime
 from stdflow.utils import detect_folders, fstep, fv, remove_dir, retrieve_from_path
 
 logger = logging.getLogger(__name__)
@@ -20,15 +21,15 @@ class Path:
     def __init__(
         self,
         root: str | None = "./data",
-        path=None,
-        step_name=None,
-        version=":last",
-        file_name=None,
+        attrs: list | None | str = None,
+        step_name: str | None = None,
+        version: str | Literal[":last", ":first"] = ":last",
+        file_name: str = None,
     ):
         """
         At this stage all information are present except the version which is to be detected if not specified
         :param root: first part of the full_path
-        :param path: seconds parts of the full_path (optional)
+        :param attrs: seconds parts of the full_path (optional)
         :param step_name: third part of the full_path (optional)
         :param version: last part of the full_path. one of [":last", ":first", "<version_name>", None]
         :param file_name: file name (optional)
@@ -41,7 +42,7 @@ class Path:
             version = version[len(VERSION_PREFIX) :]
 
         self.root = root
-        self.path: str = "/".join(path) if isinstance(path, list) else path
+        self.path: str = "/".join(attrs) if isinstance(attrs, list) else attrs
         self.step_name = step_name
         self.file_name = file_name
 
@@ -155,7 +156,7 @@ class Path:
     def from_dict(cls, step_dict, file_name, file_type):
         return cls(
             root=None,
-            path=step_dict["path"],
+            attrs=step_dict["path"],
             step_name=step_dict["step_name"],
             version=step_dict["version"],
             file_name=f"{file_name}.{file_type}",
@@ -166,7 +167,7 @@ class Path:
         return os.path.join(self.dir_path, "metadata.json")
 
     @classmethod
-    def from_input_params(cls, root, path, step, version, file_name):
+    def from_input_params(cls, root, attrs, step, version, file_name):
         # if step is True:
         #     # extract step from path
         #     step = retrieve_from_path(path, STEP_PREFIX)
@@ -182,7 +183,7 @@ class Path:
 
         return cls(
             root=root,
-            path=path,
+            attrs=attrs,
             step_name=step,
             version=version,
             file_name=file_name,
@@ -196,5 +197,5 @@ class Path:
 
 
 if __name__ == "__main__":
-    path = Path("./data", path="fr", step_name="raw", version=":last")
+    path = Path("./data", attrs="fr", step_name="raw", version=":last")
     assert path.full_path == "./data/fr/step_raw/v_2/", f"src.full_path: {path.full_path}"

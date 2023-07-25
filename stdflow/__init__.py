@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from datetime import datetime
-from typing import Optional, Union
+from typing import Optional, Union, Literal
 
 import pandas as pd
 
@@ -10,6 +10,7 @@ __version__ = "0.0.2"
 
 from stdflow.loaders import DataLoader
 from stdflow.step import GStep, Step
+from stdflow.types.strftime_type import Strftime
 
 s_step: Step = GStep()  # Singleton Step
 
@@ -46,12 +47,12 @@ def path_in(path: list | str) -> None:
 
 @property
 def file_in() -> str:
-    return s_step.file_in
+    return s_step.file_name_in
 
 
 @file_in.setter
 def file_in(file_name: str) -> None:
-    s_step.file_in = file_name
+    s_step.file_name_in = file_name
 
 
 @property
@@ -145,40 +146,53 @@ def root(root: str) -> None:
 
 
 def load(
-    root: str,
-    method: str | object = ":auto",
-    path: list | str = None,
-    step: str = None,
-    version: str | None = ":last",
-    file_name: str = True,
-    *args,
+    self,
+    *,
+    root: str | Literal[":default"] = ":default",
+    attrs: list | str | None | Literal[":default"] = ":default",
+    step: str | None | Literal[":default"] = ":default",
+    version: str | None | Literal[":default", ":last", ":first"] = ":default",
+    file_name: str | Literal[":default", ":auto"] = ":default",
+    method: str | object | Literal[":default", ":auto"] = ":default",
+    verbose: bool = False,
     **kwargs,
 ) -> pd.DataFrame:
-    return s_step.load(root, method, path, step, version, file_name, *args, **kwargs)
+    return s_step.load(
+        root=root,
+        attrs=attrs,
+        step=step,
+        version=version,
+        file_name=file_name,
+        method=method,
+        verbose=verbose,
+        **kwargs,
+    )
 
 
 def save(
+    self,
     data: pd.DataFrame,
-    root: str = None,
-    method: str | object = ":auto",
-    path: list | str = None,
-    step: str = None,
-    version: str = None,
-    file_name: str = None,
-    html_export: bool = True,
-    *args,
+    *,
+    root: str | Literal[":default"] = ":default",
+    attrs: list | str | None | Literal[":default"] = ":default",
+    step: str | None | Literal[":default"] = ":default",
+    version: str | None | Literal[":default"] | Strftime = ":default",
+    file_name: str | Literal[":default", ":auto"] = ":default",
+    method: str | object | Literal[":default", ":auto"] = ":default",
+    html_export: bool = ":default",
+    verbose: bool = False,
     **kwargs,
 ):
     return s_step.save(
         data,
-        root,
-        method,
-        path,
-        step,
-        version,
-        file_name,
-        html_export,
-        *args,
+        root=root,
+        attrs=attrs,
+        step=step,
+        version=version,
+        file_name=file_name,
+        method=method,
+        html_export=html_export,
+        verbose=verbose,
         **kwargs,
     )
 
