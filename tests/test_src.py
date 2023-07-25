@@ -30,17 +30,17 @@ setup()
 
 
 def test_versions():
-    path = Path("./data", path="fr", step_name="raw", version=":last")
+    path = Path("./data", attrs="fr", step_name="raw", version=":last")
     assert path.full_path == "./data/fr/step_raw/v_2/", f"src.full_path: {path.full_path}"
 
-    path = Path("./data", path="fr", step_name="raw", version=":first")
+    path = Path("./data", attrs="fr", step_name="raw", version=":first")
     assert path.full_path == "./data/fr/step_raw/v_1/", f"src.full_path: {path.full_path}"
 
 
 def test_from_ip_split():
     path = Path.from_input_params(
         root="./data",
-        path="fr",
+        attrs="fr",
         step="raw",
         version="1",
         file_name="file.csv",
@@ -51,7 +51,7 @@ def test_from_ip_split():
 def test_from_ip_split_wrong_input():
     path = Path.from_input_params(
         root="./data",
-        path="fr",
+        attrs="fr",
         step="step_raw",
         version="v_1",
         file_name="file.csv",
@@ -62,7 +62,7 @@ def test_from_ip_split_wrong_input():
 def test_from_ip_split_auto():
     path = Path.from_input_params(
         root="./data",
-        path="fr",
+        attrs="fr",
         step="raw",
         version=":first",
         file_name="file.csv",
