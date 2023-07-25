@@ -8,6 +8,7 @@ import uuid
 import warnings
 from datetime import datetime
 from typing import Literal, Optional, Union
+from types import ModuleType
 
 import pandas as pd
 
@@ -55,15 +56,13 @@ class GStep:
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
-            cls._instance = super().__new__(cls)
+            cls._instance = Step()
         return cls._instance
 
-    def get_step(self):
-        return Step()
 
-
-class Step:
-    def __init__(self):
+class Step(ModuleType):
+    def __init__(self, name: str = "Step"):
+        super().__init__(name)
         # === Exported === #
         self.data_l: list[MetaData] = []
         self.data_l_in: list[MetaData] = []  # direct input to this step file
@@ -88,16 +87,16 @@ class Step:
 
     # TODO fix this ugly function
     def load(
-        self,
-        *,
-        root: str | Literal[":default"] = ":default",
-        attrs: list | str | None | Literal[":default"] = ":default",
-        step: str | None | Literal[":default"] = ":default",
-        version: str | None | Literal[":default", ":last", ":first"] = ":default",
-        file_name: str | Literal[":default", ":auto"] = ":default",
-        method: str | object | Literal[":default", ":auto"] = ":default",
-        verbose: bool = False,
-        **kwargs,
+            self,
+            *,
+            root: str | Literal[":default"] = ":default",
+            attrs: list | str | None | Literal[":default"] = ":default",
+            step: str | None | Literal[":default"] = ":default",
+            version: str | None | Literal[":default", ":last", ":first"] = ":default",
+            file_name: str | Literal[":default", ":auto"] = ":default",
+            method: str | object | Literal[":default", ":auto"] = ":default",
+            verbose: bool = False,
+            **kwargs,
     ) -> pd.DataFrame:
         """
         :param verbose:
@@ -185,18 +184,19 @@ class Step:
         return data
 
     def save(
-        self,
-        data: pd.DataFrame,
-        *,
-        root: str | Literal[":default"] = ":default",
-        attrs: list | str | None | Literal[":default"] = ":default",
-        step: str | None | Literal[":default"] = ":default",
-        version: str | None | Literal[":default"] | Strftime = ":default",
-        file_name: str | Literal[":default", ":auto"] = ":default",
-        method: str | object | Literal[":default", ":auto"] = ":default",
-        html_export: bool = ":default",
-        verbose: bool = False,
-        **kwargs,
+            self,
+            data: pd.DataFrame,
+            *,
+            root: str | Literal[":default"] = ":default",
+            attrs: list | str | None | Literal[":default"] = ":default",
+            step: str | None | Literal[":default"] = ":default",
+            version: str | None | Literal[":default"] | Strftime = ":default",
+            file_name: str | Literal[":default", ":auto"] = ":default",
+            method: str | object | Literal[":default", ":auto"] = ":default",
+            descriptions: dict[str | str] | None = None,
+            html_export: bool = ":default",
+            verbose: bool = False,
+            **kwargs,
     ):
         """
         :param data: data to save
@@ -207,6 +207,7 @@ class Step:
         :param step: step
         :param version: last part of the full_path. one of [strftime str, "<version_name>", None]
         :param file_name: file name
+        :param descriptions: columns description of the dataset to save
         :param html_export: if True, export html view of the data and the pipeline it comes from
         :param verbose:
         :param kwargs: kwargs to send to the method
@@ -239,7 +240,7 @@ class Step:
         # Save data
         method(data, path.full_path, **kwargs)
 
-        self.data_l.append(MetaData.from_data(path, data, method.__str__(), self.data_l_in))
+        self.data_l.append(MetaData.from_data(path, data, method.__str__(), self.data_l_in, descriptions))
         self._to_file(path)
         if html_export:
             to_html(path.metadata_path, path.dir_path)
@@ -344,7 +345,7 @@ class Step:
             logger.debug(f"metadata file already exists in {file_path}. Replacing")
         with open(file_path, "w") as f:
             logger.debug(f"Saving metadata file to {file_path}")
-            logger.debug(f"metadata: {self.__dict__()}")
+            # logger.debug(f"metadata: {self.__dict__()}")
             json.dump(self.__dict__(), f)
 
     # === Properties === #
@@ -366,11 +367,11 @@ class Step:
         self._version_in = version_name
 
     @property
-    def path_in(self) -> list | str:
+    def attrs_in(self) -> list | str:
         return self._attrs_in
 
-    @path_in.setter
-    def path_in(self, path: list | str) -> None:
+    @attrs_in.setter
+    def attrs_in(self, path: list | str) -> None:
         self._attrs_in = path
 
     @property
@@ -414,11 +415,11 @@ class Step:
         self._version_out = version_name
 
     @property
-    def path_out(self) -> list | str:
+    def attrs_out(self) -> list | str:
         return self._attrs_out
 
-    @path_out.setter
-    def path_out(self, path: list | str) -> None:
+    @attrs_out.setter
+    def attrs_out(self, path: list | str) -> None:
         self._attrs_out = path
 
     @property

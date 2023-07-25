@@ -67,11 +67,18 @@ class MetaData:
         data: pd.DataFrame,
         export_method_used: str = "unknown",
         input_files: list["MetaData"] = None,
+        descriptions: dict[str, str] = None,
     ):
         if input_files is not None:
             input_files = list({"uuid": file.uuid} for file in input_files)
         columns = list(
-            {"name": c, "type": t.name, "description": None}
+            {
+                "name": c,
+                "type": t.name,
+                "description": (
+                    descriptions.get(c, None) if isinstance(descriptions, dict) else None
+                ),
+            }
             for c, t in zip(data.columns, data.dtypes)
         )
         return cls(path, columns, export_method_used, input_files or [], uuid_=None)

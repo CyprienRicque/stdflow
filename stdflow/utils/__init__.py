@@ -7,6 +7,7 @@ from typing import List, Union
 from graphviz import Digraph
 
 from stdflow.config import STEP_PREFIX, VERSION_PREFIX
+from stdflow.html.template import template
 
 
 def get_arg_value(arg, default):
@@ -90,8 +91,8 @@ def to_html(metadata_file, dest):
     # get_pipeline(metadata, dest)
 
     # Set up Jinja2 environment
-    env = Environment(loader=FileSystemLoader("."))
-    template = env.get_template("stdflow/html/template.html")
+    # env = Environment(loader=FileSystemLoader("."))
+    # template = env.get_template("stdflow/html/template.html")
 
     # Convert to JavaScript
     js_data = json.dumps(metadata)
@@ -100,8 +101,9 @@ def to_html(metadata_file, dest):
     with open(os.path.join(dest, "data.js"), "w") as js_file:
         js_file.write(f"var data = {js_data};")
 
-    # cp html/template.html dest
-    shutil.copy("stdflow/html/template.html", dest)
+    # dump the content of template variable in dest/template.html
+    with open(os.path.join(dest, "template.html"), "w") as html_file:
+        html_file.write(template)
 
 
 #     # Write output to HTML file

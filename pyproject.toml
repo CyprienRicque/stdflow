@@ -2,14 +2,18 @@
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+py-modules = ["stdflow"]
+
 [project]
 name = "stdflow"
-version = "0.0.2"
+version = "0.0.3"
 description = "[alpha] A package that transform your notebooks and python files into pipeline steps by standardizing the data input / output."
 readme = "README.md"
 authors = [
     { name = "Cyprien Ricque", email = "ricque.cyprien@gmail.com" },
 ]
+keywords = ["data science", "data", "flow", "data flow"]
 requires-python = ">=3.9"
 classifiers = [
     "Development Status :: 3 - Alpha",
