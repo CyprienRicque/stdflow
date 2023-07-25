@@ -1,7 +1,7 @@
 import pandas as pd
 
 import stdflow as sf
-from tests import setup
+from tests.old import setup
 
 setup()
 

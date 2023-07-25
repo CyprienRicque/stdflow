@@ -4,7 +4,8 @@ import pandas as pd
 
 import stdflow as sf
 from stdflow import Step
-from tests import setup
+# from stdflow import Step
+from tests.old import setup
 
 setup()
 
@@ -16,28 +17,21 @@ def test_export():
     assert df.shape == (100, 4)
 
     df["new_col"] = "new_col"
-    step.save(
-        df,
-        attrs="fr",
-        step="with_new_col",
-        version="1",
-        file_name="random.csv",
-    )
+    step.save(df, attrs="fr", step="with_new_col", version="1", file_name="random.csv")
     assert os.path.exists("./data/fr/step_with_new_col/v_1/random.csv")
-    step.save(
-        df,
-        version="coucou%Y",
-        file_name="coucou.csv",
-    )
+    step.save(df, version="coucou%Y", file_name="coucou.csv")
     assert os.path.exists("./data/v_coucou2023/coucou.csv")
 
 
 def test_save_merge():
     step = sf.Step()
+
     step.root = "./data"
     step.file_name_out = "merged.csv"
-    step.path_out = "es"
-    step.path_in = "es"
+    step.attrs_out = "es"
+    step.attrs_in = "es"
+
+    # Load
 
     df1 = step.load(step="raw", version=None, file_name="random.csv")
     assert df1.shape == (100, 5)
@@ -46,6 +40,8 @@ def test_save_merge():
     assert df2.shape == (100, 2)
 
     df_full = pd.merge(df1, df2, on="id", how="left")
+
+    # Save
 
     step.save(df_full, step="merge_left", version=None)
     assert os.path.exists("./data/es/step_merge_left/merged.csv")
@@ -98,7 +94,7 @@ def test_path_as_list():
 
     step = sf.Step()
     step.root = "./data"
-    step.path_out = ["global", "all_combined"]
+    step.attrs_out = ["global", "all_combined"]
     step.step_out = "features"
 
     df1 = step.load(
@@ -117,9 +113,9 @@ def test_path_as_list():
 
     assert os.path.exists("./data/global/all_combined/step_features/features.csv")
 
-    # s = Step._from_file("data/global/step_es_fr_merge/v_0/metadata.json")
-    # assert len(s.data_l) == 5, f"{len(s.data_l)=}, {s.data_l=}"
-    # assert len(s.data_l_in) == 2, f"{len(s.data_l_in)=}, {s.data_l_in=}"
+    s = Step._from_file("data/global/step_es_fr_merge/v_0/metadata.json")
+    assert len(s.data_l) == 5, f"{len(s.data_l)=}, {s.data_l=}"
+    assert len(s.data_l_in) == 2, f"{len(s.data_l_in)=}, {s.data_l_in=}"
 
 
 if __name__ == "__main__":
