@@ -1,18 +1,20 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "stdflow"
-version = "0.0.1"
+version = "0.0.2"
 description = "[alpha] A package that transform your notebooks and python files into pipeline steps by standardizing the data input / output."
 readme = "README.md"
 authors = [
     { name = "Cyprien Ricque", email = "ricque.cyprien@gmail.com" },
 ]
-license = "Apache"
+requires-python = ">=3.9"
 classifiers = [
-    "Development Status :: First release",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    'License :: OSI Approved :: MIT License',
     "Programming Language :: Python :: 3.9",
 ]
 dependencies = [

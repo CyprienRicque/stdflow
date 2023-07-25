@@ -2,7 +2,7 @@ import stdflow as st
 
 
 def test_exact_version():
-    assert st.__version__ == "0.0.1"
+    assert st.__version__ == "0.0.2"
 
 
 def test_version():
