@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from datetime import datetime
-from typing import Optional, Union, Literal
+from typing import Literal, Optional, Union
 
 import pandas as pd
 
@@ -146,7 +146,6 @@ def root(root: str) -> None:
 
 
 def load(
-    self,
     *,
     root: str | Literal[":default"] = ":default",
     attrs: list | str | None | Literal[":default"] = ":default",
@@ -170,7 +169,6 @@ def load(
 
 
 def save(
-    self,
     data: pd.DataFrame,
     *,
     root: str | Literal[":default"] = ":default",
