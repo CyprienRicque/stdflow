@@ -97,17 +97,12 @@ def test_path_as_list():
     step.attrs_out = ["global", "all_combined"]
     step.step_out = "features"
 
-    df1 = step.load(
-        attrs="global",
-        step="es_fr_merge",
-        version="0",
-        file_name="merged_g.csv",
-    )
+    df1 = step.load(attrs="global", step="es_fr_merge", version="0", file_name="merged_g.csv")
     df2 = step.load(attrs=["es"], step="merge_left", file_name="merged.csv", version=None)
-    # df3 = step.load(attrs=["fr"], step="raw", version="1", file_name="random.csv") FIXME
+    df3 = step.load(attrs=["fr"], step="raw", version="1", file_name="random.csv")
 
     df_full = pd.merge(df1, df2, on="id", how="left")
-    # df_full = pd.merge(df_full, df3, on="id", how="left", suffixes=("_1", "_2"))
+    df_full = pd.merge(df_full, df3, on="id", how="left", suffixes=("_1", "_2"))
 
     step.save(df_full, file_name="features.csv", version=None)
 
@@ -116,6 +111,10 @@ def test_path_as_list():
     s = Step._from_file("data/global/step_es_fr_merge/v_0/metadata.json")
     assert len(s.data_l) == 5, f"{len(s.data_l)=}, {s.data_l=}"
     assert len(s.data_l_in) == 2, f"{len(s.data_l_in)=}, {s.data_l_in=}"
+
+    s = Step._from_file("./data/global/all_combined/step_features/metadata.json")
+    assert len(s.data_l_in) == 3, f"{len(s.data_l_in)=}, {s.data_l_in=}"
+    assert len(s.data_l) == 7, f"{len(s.data_l)=}, {s.data_l=}"
 
 
 if __name__ == "__main__":

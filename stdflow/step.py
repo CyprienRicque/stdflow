@@ -159,10 +159,10 @@ class Step(ModuleType):
             elif new_file.path.full_path_from_root in [
                 f.path.full_path_from_root for f in self.data_l
             ]:
-                warnings.warn(
-                    f"Replacing {new_file} by {file_loaded} as they have the same path but not the same uuid",
-                    category=ResourceWarning,
-                )
+                # warnings.warn(
+                #     f"Replacing {new_file} by {file_loaded} as they have the same path but not the same uuid",
+                #     category=ResourceWarning,
+                # )
                 to_rm = [
                     f
                     for f in self.data_l
@@ -172,14 +172,28 @@ class Step(ModuleType):
                 to_rm = to_rm[0]
                 self.data_l.remove(to_rm)
                 self.data_l.append(new_file)
-                if new_file == file_loaded:
-                    if to_rm in self.data_l_in:
-                        self.data_l_in.remove(to_rm)
-                    self.data_l_in.append(new_file)
             else:
                 self.data_l.append(new_file)
-                if new_file == file_loaded:
-                    self.data_l_in.append(new_file)
+
+        # file loaded
+
+        if file_loaded in [f for f in self.data_l_in]:  # file already added: same uuid
+            # logger.debug(f"File {md} already added. Skipping")
+            pass
+        elif file_loaded.path.full_path_from_root in [
+            f.path.full_path_from_root for f in self.data_l_in
+        ]:
+            to_rm = [
+                f
+                for f in self.data_l_in
+                if f.path.full_path_from_root == file_loaded.path.full_path_from_root
+            ]
+            assert len(to_rm) == 1
+            to_rm = to_rm[0]
+            self.data_l_in.remove(to_rm)
+            self.data_l_in.append(file_loaded)
+        else:
+            self.data_l_in.append(file_loaded)
 
         return data
 

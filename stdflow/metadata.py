@@ -29,7 +29,8 @@ class MetaData:
         input_files: list[dict],
         uuid_: str = None,
     ):
-        self.uuid = uuid_ or str(uuid.uuid4())
+        # self.uuid = uuid_ or str(uuid.uuid4())
+        self.uuid = uuid_ or path.full_path_from_root
         self.path: Path = path
         self.columns: list[dict] = columns
         self.export_method_used: str = export_method_used
