@@ -7,7 +7,7 @@ import uuid
 
 import pandas as pd
 
-from stdflow.path import Path
+from stdflow.path import DataPath
 from stdflow.utils import get_creation_time, string_to_uuid
 
 logging.basicConfig()
@@ -20,7 +20,7 @@ class MetaData:
 
     def __init__(
         self,
-        path: Path,
+        path: DataPath,
         columns: list[dict],
         export_method_used: str,
         input_files: list[dict],
@@ -31,7 +31,7 @@ class MetaData:
         self.uuid = uuid_ or str(
             string_to_uuid(f"{path.full_path_from_root}{self.file_creation_time}")
         )
-        self.path: Path = path
+        self.path: DataPath = path
         self.columns: list[dict] = columns
         self.export_method_used: str = export_method_used
         self.input_files: list[dict] = input_files
@@ -51,7 +51,7 @@ class MetaData:
     def from_dict(cls, d):
         if not d:
             raise ValueError("d is empty")
-        path = Path.from_dict(d["step"], d["file_name"], d["file_type"])
+        path = DataPath.from_dict(d["step"], d["file_name"], d["file_type"])
 
         return cls(
             path=path,
@@ -64,7 +64,7 @@ class MetaData:
     @classmethod
     def from_data(
         cls,
-        path: Path,
+        path: DataPath,
         data: pd.DataFrame,
         export_method_used: str = "unknown",
         input_files: list["MetaData"] = None,
@@ -85,7 +85,7 @@ class MetaData:
         return cls(path, columns, export_method_used, input_files or [], uuid_=None)
 
     def __eq__(self, other):
-        if isinstance(other, Path):
+        if isinstance(other, DataPath):
             return self.path == other
         if isinstance(other, MetaData):
             return self.uuid == other.uuid
@@ -102,19 +102,19 @@ class MetaData:
         return self.__str__()
 
 
-def get_file(files: list[dict], path: Path):
+def get_file(files: list[dict], path: DataPath):
     return next(
         (
             f
             for f in files
-            if Path.from_dict(f["step"], f["file_name"], f["file_type"]).full_path_from_root
-            == path.full_path_from_root
+            if DataPath.from_dict(f["step"], f["file_name"], f["file_type"]).full_path_from_root
+               == path.full_path_from_root
         ),
         None,
     )
 
 
-def get_file_md(files: list[MetaData], path: Path):
+def get_file_md(files: list[MetaData], path: DataPath):
     return next(
         (f for f in files if f.path.full_path_from_root == path.full_path_from_root),
         None,

@@ -19,7 +19,7 @@ import pandas as pd
 
 from stdflow.config import DEFAULT_DATE_VERSION_FORMAT, INFER
 from stdflow.metadata import MetaData, get_file, get_file_md
-from stdflow.path import Path
+from stdflow.path import DataPath
 from stdflow.types.strftime_type import Strftime
 from stdflow.utils import get_arg_value, to_html
 
@@ -120,7 +120,7 @@ class Step(ModuleType):
         version = get_arg_value(version, self._version_in)
         method = get_arg_value(method, self._method_in)
 
-        path = Path.from_input_params(root, attrs, step, version, file_name)
+        path = DataPath.from_input_params(root, attrs, step, version, file_name)
         logger.debug(f"Loading data from {path.full_path}")
 
         if method == ":auto":
@@ -209,7 +209,7 @@ class Step(ModuleType):
         if Strftime.__call__(version):
             version = datetime.now().strftime(version)
 
-        path = Path.from_input_params(root, attrs, step, version, file)
+        path = DataPath.from_input_params(root, attrs, step, version, file)
 
         # if the directory does not exist, create it recursively
         if not os.path.exists(path.dir_path):
@@ -320,10 +320,10 @@ class Step(ModuleType):
         return cls._from_dict(json.load(open(path, "r")))
 
     @classmethod
-    def _from_path(cls, path: Path):
+    def _from_path(cls, path: DataPath):
         return Step._from_file(path.metadata_path)
 
-    def _to_file(self, path: Path):
+    def _to_file(self, path: DataPath):
         """Save step to file"""
         file_path = os.path.join(path.dir_path, MetaData.file_name)
         if not os.path.exists(path.dir_path):

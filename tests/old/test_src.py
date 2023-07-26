@@ -1,6 +1,6 @@
 import os
 
-from stdflow.path import Path
+from stdflow.path import DataPath
 
 
 def setup():
@@ -30,15 +30,15 @@ setup()
 
 
 def test_versions():
-    path = Path("./data", attrs="fr", step_name="raw", version=":last")
+    path = DataPath("./data", attrs="fr", step_name="raw", version=":last")
     assert path.full_path == "./data/fr/step_raw/v_2/", f"src.full_path: {path.full_path}"
 
-    path = Path("./data", attrs="fr", step_name="raw", version=":first")
+    path = DataPath("./data", attrs="fr", step_name="raw", version=":first")
     assert path.full_path == "./data/fr/step_raw/v_1/", f"src.full_path: {path.full_path}"
 
 
 def test_from_ip_split():
-    path = Path.from_input_params(
+    path = DataPath.from_input_params(
         root="./data",
         attrs="fr",
         step="raw",
@@ -49,7 +49,7 @@ def test_from_ip_split():
 
 
 def test_from_ip_split_wrong_input():
-    path = Path.from_input_params(
+    path = DataPath.from_input_params(
         root="./data",
         attrs="fr",
         step="step_raw",
@@ -60,7 +60,7 @@ def test_from_ip_split_wrong_input():
 
 
 def test_from_ip_split_auto():
-    path = Path.from_input_params(
+    path = DataPath.from_input_params(
         root="./data",
         attrs="fr",
         step="raw",

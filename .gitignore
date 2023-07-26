@@ -163,3 +163,9 @@ data/*
 
 .idea/*
 data.js
+
+*.csv
+demo/**/*.json
+demo/**/*.html
+
+flow.excalidraw

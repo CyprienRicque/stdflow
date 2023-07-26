@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 import os
 
+from stdflow.path import Path
+
 try:
     from typing import Literal, Optional
 except ImportError:
@@ -17,7 +19,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-class Path:
+class DataPath(Path):
     def __init__(
         self,
         root: str | None = "./data",
@@ -35,16 +37,15 @@ class Path:
         :param file_name: file name (optional)
         """
         # if step is str and contains step_, remove it
+        super().__init__(root, file_name)
         if isinstance(step_name, str) and step_name.startswith(STEP_PREFIX):
             step_name = step_name[len(STEP_PREFIX) :]
         # if version is str and contains v_, remove it
         if isinstance(version, str) and version.startswith(VERSION_PREFIX):
             version = version[len(VERSION_PREFIX) :]
 
-        self.root = root
-        self.path: str = "/".join(attrs) if isinstance(attrs, list) else attrs
+        self.attrs: str = "/".join(attrs) if isinstance(attrs, list) else attrs
         self.step_name = step_name
-        self.file_name = file_name
 
         self.version = None
         if version in [":last", ":first"]:
@@ -53,31 +54,6 @@ class Path:
             self.version = self.detect_version(self.dir_path, version)
         elif version is not None:
             self.version = version
-
-    @property
-    def file_name_no_ext(self):
-        return os.path.splitext(self.file_name)[0]
-
-    # @classmethod
-    # def from_full_path(cls, full_path):
-    #     """
-    #     :param full_path: full path to the file (included)
-    #     :return: Path object
-    #     """
-    #     path = full_path
-    #
-    #     file_name = os.path.basename(full_path)
-    #     version = retrieve_from_path(full_path, VERSION_PREFIX)
-    #     step = retrieve_from_path(full_path, STEP_PREFIX)
-    #
-    #     path = os.path.dirname(path)
-    #     path = remove_dir(path, file_name) if file_name else path
-    #     path = remove_dir(path, fv(version)) if version else path
-    #     path = remove_dir(path, fstep(step)) if step else path
-    #
-    #     return cls(
-    #         root=path, step_name=step, version=version, file_name=file_name
-    #     )
 
     def detect_version(self, path, version_type):
         if version_type not in [":last", ":first"]:
@@ -98,9 +74,9 @@ class Path:
 
     @property
     def full_path(self):
-        return Path.full_path_(
+        return Path._create_path(
             self.root,
-            self.path,
+            self.attrs,
             fstep(self.step_name) if self.step_name else "",
             fv(self.version) if self.version else "",
             self.file_name,
@@ -108,9 +84,9 @@ class Path:
 
     @property
     def full_path_from_root(self):
-        return Path.full_path_(
+        return Path._create_path(
             None,
-            self.path,
+            self.attrs,
             fstep(self.step_name) if self.step_name else "",
             fv(self.version) if self.version else "",
             self.file_name,
@@ -118,9 +94,9 @@ class Path:
 
     @property
     def dir_path(self):
-        return Path.full_path_(
+        return Path._create_path(
             self.root,
-            self.path,
+            self.attrs,
             fstep(self.step_name) if self.step_name else "",
             fv(self.version) if self.version else "",
             None,
@@ -128,26 +104,16 @@ class Path:
 
     @property
     def step_dir(self):
-        return Path.full_path_(
+        return Path._create_path(
             self.root,
-            self.path,
+            self.attrs,
             fstep(self.step_name) if self.step_name else None,
-            None,
-            None,
         )
-
-    @staticmethod
-    def full_path_(root, path, step, version, file_name):
-        return os.path.join(root or "", path or "", step or "", version or "", file_name or "")
-
-    @property
-    def extension(self):
-        return os.path.splitext(self.file_name)[-1][1:]
 
     @property
     def dict_step(self):
         return dict(
-            path=self.path,
+            path=self.attrs,
             step_name=self.step_name,
             version=self.version,
         )
@@ -189,13 +155,7 @@ class Path:
             file_name=file_name,
         )
 
-    def __str__(self):
-        return self.full_path
-
-    def __repr__(self):
-        return self.full_path
-
 
 if __name__ == "__main__":
-    path = Path("./data", attrs="fr", step_name="raw", version=":last")
+    path = DataPath("./data", attrs="fr", step_name="raw", version=":last")
     assert path.full_path == "./data/fr/step_raw/v_2/", f"src.full_path: {path.full_path}"
