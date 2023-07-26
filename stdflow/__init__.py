@@ -6,7 +6,7 @@ from typing import Literal, Optional, Union
 
 import pandas as pd
 
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 
 from stdflow.loaders import DataLoader
 from stdflow.step import GStep, Step
@@ -197,6 +197,7 @@ else:  # normal import, use `Module` class to provide `attr` property
     print(f"loading {__name__} as a module")
     sys.modules[__name__] = Module(sys.modules[__name__])
 
+
 # self.step: Step = Step()  # Singleton Step
 
 
@@ -205,7 +206,180 @@ else:  # normal import, use `Module` class to provide `attr` property
 #######################################################################
 
 
+@property
+def step(self):
+    ...
 
 
+@property
+def attr(self):
+    ...
 
 
+@attr.setter
+def attr(self, value):
+    ...
+
+
+@property
+def step_in(self) -> str:
+    ...
+
+
+@step_in.setter
+def step_in(self, step_name: str) -> None:
+    ...
+
+
+@property
+def version_in(self) -> str:
+    ...
+
+
+@version_in.setter
+def version_in(self, version_name: str) -> None:
+    ...
+
+
+@property
+def attrs_in(self) -> list | str:
+    ...
+
+
+@attrs_in.setter
+def attrs_in(self, path: list | str) -> None:
+    ...
+
+
+@property
+def file_in(self) -> str:
+    ...
+
+
+@file_in.setter
+def file_in(self, file_name: str) -> None:
+    ...
+
+
+@property
+def method_in(self) -> str | object:
+    ...
+
+
+@method_in.setter
+def method_in(self, method: str | object) -> None:
+    ...
+
+
+@property
+def root_in(self) -> str:
+    ...
+
+
+@root_in.setter
+def root_in(self, root: str) -> None:
+    ...
+
+
+@property
+def step_out(self) -> str:
+    ...
+
+
+@step_out.setter
+def step_out(self, step_name: str) -> None:
+    ...
+
+
+@property
+def version_out(self) -> str:
+    ...
+
+
+@version_out.setter
+def version_out(self, version_name: str) -> None:
+    ...
+
+
+@property
+def attrs_out(self) -> list | str:
+    ...
+
+
+@attrs_out.setter
+def attrs_out(self, path: list | str) -> None:
+    ...
+
+
+@property
+def file_name_out(self) -> str:
+    ...
+
+
+@file_name_out.setter
+def file_name_out(self, file_name: str) -> None:
+    ...
+
+
+@property
+def method_out(self) -> str | object:
+    ...
+
+
+@method_out.setter
+def method_out(self, method: str | object) -> None:
+    ...
+
+
+@property
+def root_out(self) -> str:
+    ...
+
+
+@root_out.setter
+def root_out(self, root: str) -> None:
+    ...
+
+
+@property
+def root(self) -> str:
+    ...
+
+
+@root.setter
+def root(self, root: str) -> None:
+    ...
+
+
+def load(self,
+         *,
+         root: str | Literal[":default"] = ":default",
+         attrs: list | str | None | Literal[":default"] = ":default",
+         step: str | None | Literal[":default"] = ":default",
+         version: str | None | Literal[":default", ":last", ":first"] = ":default",
+         file_name: str | Literal[":default", ":auto"] = ":default",
+         method: str | object | Literal[":default", ":auto"] = ":default",
+         verbose: bool = False,
+         **kwargs,
+         ) -> pd.DataFrame:
+    ...
+
+
+def save(self,
+         data: pd.DataFrame,
+         *,
+         root: str | Literal[":default"] = ":default",
+         attrs: list | str | None | Literal[":default"] = ":default",
+         step: str | None | Literal[":default"] = ":default",
+         version: str | None | Literal[":default"] | Strftime = ":default",
+         file_name: str | Literal[":default", ":auto"] = ":default",
+         method: str | object | Literal[":default", ":auto"] = ":default",
+         html_export: bool = ":default",
+         verbose: bool = False,
+         **kwargs,
+         ):
+    ...
+
+
+def reset(self):
+    ...
