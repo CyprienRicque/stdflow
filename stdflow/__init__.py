@@ -6,7 +6,7 @@ from typing import Literal, Optional, Union
 
 import pandas as pd
 
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 
 from stdflow.loaders import DataLoader
 from stdflow.step import GStep, Step
