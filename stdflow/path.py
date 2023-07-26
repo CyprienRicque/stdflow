@@ -2,18 +2,18 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Literal, Optional
+
+try:
+    from typing import Literal, Optional
+except ImportError:
+    from typing_extensions import Literal, Optional
 
 from stdflow.config import STEP_PREFIX, VERSION_PREFIX
 from stdflow.types.strftime_type import Strftime
 from stdflow.utils import detect_folders, fstep, fv, remove_dir, retrieve_from_path
 
+logging.basicConfig()
 logger = logging.getLogger(__name__)
-
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-
-logger.addHandler(ch)
 logger.setLevel(logging.DEBUG)
 
 

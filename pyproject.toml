@@ -14,20 +14,28 @@ authors = [
     { name = "Cyprien Ricque", email = "ricque.cyprien@gmail.com" },
 ]
 keywords = ["data science", "data", "flow", "data flow"]
-requires-python = ">=3.9"
+requires-python = ">=3.7"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     'License :: OSI Approved :: MIT License',
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.9",
 ]
 dependencies = [
-    "pandas~=2.0.3",
-    "datetime~=5.2",
-    "python-box[all]~=7.0",
+    # Python 3.9
+    "pandas>=2.0.0; python_version>='3.9'",
+
+    # Python 3.7
+    "typing-extensions>=4.7.1; python_version<'3.8'",
+    "pandas~=1.3.5; python_version<'3.8'",
+
+    # Any
     "openpyxl~=3.1.2",
-    "python-box~=7.0.1"
+    "python-box[all]~=7.0",
 ]
+
 
 
 [tool.isort]

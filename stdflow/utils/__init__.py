@@ -5,13 +5,13 @@ import glob
 import os
 import re
 import shutil
-from typing import List, Union
 import uuid
-
-from graphviz import Digraph
+from typing import List, Union
 
 from stdflow.config import STEP_PREFIX, VERSION_PREFIX
 from stdflow.html.template import template
+
+# from graphviz import Digraph
 
 
 def get_creation_time(file_path) -> None | datetime.datetime:
@@ -76,26 +76,26 @@ def remove_dir(path, dir_to_remove):
     return os.path.join(path, *path_parts)
 
 
-def get_pipeline(metadata, dest):
-    dot = Digraph("Pipeline")
-
-    # For each file, create a node, and for each input_file, draw an edge
-    for file in metadata["files"]:
-        dot.node(file["file_name"])
-        for input_file in file.get("input_files", []):
-            # find the file in the list of files using uuid
-            print(f"{dest=}")
-            print(f"{input_file['uuid']=}")
-            print([f["uuid"] for f in metadata["files"]])
-
-            input_file = [f for f in metadata["files"] if f["uuid"] == input_file["uuid"]][0]
-            dot.edge(input_file["file_name"], file["file_name"])
-
-    # Save the graph in DOT format
-    dot.save(os.path.join(dest, "pipeline.dot"))
-    os.system("dot -Tpng pipeline.dot -o pipeline.png")
-    dot.format = "svg"
-    dot.render("pipeline")
+# def get_pipeline(metadata, dest):
+#     dot = Digraph("Pipeline")
+#
+#     # For each file, create a node, and for each input_file, draw an edge
+#     for file in metadata["files"]:
+#         dot.node(file["file_name"])
+#         for input_file in file.get("input_files", []):
+#             # find the file in the list of files using uuid
+#             print(f"dest={dest}")
+#             print(f"input_file['uuid']={input_file['uuid']}")
+#             print([f["uuid"] for f in metadata["files"]])
+#
+#             input_file = [f for f in metadata["files"] if f["uuid"] == input_file["uuid"]][0]
+#             dot.edge(input_file["file_name"], file["file_name"])
+#
+#     # Save the graph in DOT format
+#     dot.save(os.path.join(dest, "pipeline.dot"))
+#     os.system("dot -Tpng pipeline.dot -o pipeline.png")
+#     dot.format = "svg"
+#     dot.render("pipeline")
 
 
 def to_html(metadata_file, dest):

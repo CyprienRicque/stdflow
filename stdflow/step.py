@@ -7,7 +7,12 @@ import os
 import uuid
 import warnings
 from datetime import datetime
-from typing import Literal, Optional, Union
+
+try:
+    from typing import Any, Literal, Optional, Tuple, Union
+except ImportError:
+    from typing_extensions import Literal, Union, Any, Tuple
+
 from types import ModuleType
 
 import pandas as pd
@@ -18,12 +23,8 @@ from stdflow.path import Path
 from stdflow.types.strftime_type import Strftime
 from stdflow.utils import get_arg_value, to_html
 
+logging.basicConfig()
 logger = logging.getLogger(__name__)
-
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-
-logger.addHandler(ch)
 logger.setLevel(logging.DEBUG)
 
 loaders = dict(
@@ -86,26 +87,28 @@ class Step(ModuleType):
         self._root: str | None = "./data"
 
     def load(
-            self,
-            *,
-            root: str | Literal[":default"] = ":default",
-            attrs: list | str | None | Literal[":default"] = ":default",
-            step: str | None | Literal[":default"] = ":default",
-            version: str | None | Literal[":default", ":last", ":first"] = ":default",
-            file_name: str | Literal[":default", ":auto"] = ":default",
-            method: str | object | Literal[":default", ":auto"] = ":default",
-            verbose: bool = False,
-            **kwargs,
-    ) -> pd.DataFrame:
+        self,
+        *,
+        root: str | Literal[":default"] = ":default",
+        attrs: list | str | None | Literal[":default"] = ":default",
+        step: str | None | Literal[":default"] = ":default",
+        version: str | None | Literal[":default", ":last", ":first"] = ":default",
+        file_name: str | Literal[":default", ":auto"] = ":default",
+        method: str | object | Literal[":default", ":auto"] = ":default",
+        descriptions: bool = False,
+        verbose: bool = False,
+        **kwargs,
+    ) -> Tuple[Any, dict] | Any:
         """
         :param verbose:
         :param root: path to the root data folder. not exported in metadata.
-        :param file_name: input file name
+        :param file_name: name of the file to load e.g. data.csv
         :param method: method to load the data to use. e.g. pd.read_csv, pd.read_excel, pd.read_parquet, ... or "csv" to use default csv...
             Method must use path as the first argument
         :param attrs: path from data folder to file. (optionally include step and version)
         :param step: input step name
         :param version: input version name. one of [":last", ":first", "<version_name>", None]
+        :param descriptions: whether to return the description of the file. `df, desc = sf.load(..., descriptions=True)`
         :param kwargs: kwargs to send to the method
         :return:
         """
@@ -118,6 +121,7 @@ class Step(ModuleType):
         method = get_arg_value(method, self._method_in)
 
         path = Path.from_input_params(root, attrs, step, version, file_name)
+        logger.debug(f"Loading data from {path.full_path}")
 
         if method == ":auto":
             method = path.extension
@@ -131,22 +135,23 @@ class Step(ModuleType):
 
         # Add metadata
         previous_step = Step._from_path(path)
-        if not previous_step:
-            file_loaded = MetaData.from_data(path, data)
-            new_files = [file_loaded]
-        else:
-            file_loaded = get_file_md(previous_step.data_l, path)
-            if not file_loaded:
+        if previous_step:  # Metadata file in the folder of the file to load exists
+            file_md: MetaData = get_file_md(previous_step.data_l, path)
+            if file_md:
+                new_files = previous_step._files_needed_to_gen([file_md]) + [file_md]
+            else:  # The file is not in the metadata file
                 warnings.warn(
                     f"metadata file found but file {path.full_path} not present in it."
-                    f"Quick fix: change the file location as it was not generated the same way as other files "
-                    f"in this folder. current behavior: Using the file as coming from no previous files",
-                    category=ResourceWarning,
+                    f"Quick fix: change the file location as it was not generated the same way as other files"
+                    f"in this folder. current behavior: Using the file as having no previous step "
+                    f"and ignoring the metadata file.",
+                    category=UserWarning,
                 )
-                file_loaded = MetaData.from_data(path, data)
-                new_files = [file_loaded]
-            else:
-                new_files = previous_step._files_needed_to_gen([file_loaded]) + [file_loaded]
+                previous_step = None
+
+        if previous_step is None:
+            file_md: MetaData = MetaData.from_data(path, data)
+            new_files = [file_md]
 
         # do not add the same file twice in self.data_l
         # 1. Keep the file one if same uuid
@@ -156,25 +161,27 @@ class Step(ModuleType):
                 self.data_l.append(new_file)
 
         # file loaded
-        if file_loaded not in [f for f in self.data_l_in]:  # file already added: same uuid
-            self.data_l_in.append(file_loaded)
+        if file_md not in [f for f in self.data_l_in]:  # file already added: same uuid
+            self.data_l_in.append(file_md)
 
+        if descriptions:
+            return data, file_md.descriptions
         return data
 
     def save(
-            self,
-            data: pd.DataFrame,
-            *,
-            root: str | Literal[":default"] = ":default",
-            attrs: list | str | None | Literal[":default"] = ":default",
-            step: str | None | Literal[":default"] = ":default",
-            version: str | None | Literal[":default"] | Strftime = ":default",
-            file_name: str | Literal[":default", ":auto"] = ":default",
-            method: str | object | Literal[":default", ":auto"] = ":default",
-            descriptions: dict[str | str] | None = None,
-            html_export: bool = ":default",
-            verbose: bool = False,
-            **kwargs,
+        self,
+        data: pd.DataFrame,
+        *,
+        root: str | Literal[":default"] = ":default",
+        attrs: list | str | None | Literal[":default"] = ":default",
+        step: str | None | Literal[":default"] = ":default",
+        version: str | None | Literal[":default"] | Strftime = ":default",
+        file_name: str | Literal[":default", ":auto"] = ":default",
+        method: str | object | Literal[":default", ":auto"] = ":default",
+        descriptions: dict[str | str] | None = None,
+        html_export: bool = ":default",
+        verbose: bool = False,
+        **kwargs,
     ):
         """
         :param data: data to save
@@ -218,7 +225,9 @@ class Step(ModuleType):
         # Save data
         method(data, path.full_path, **kwargs)
 
-        self.data_l.append(MetaData.from_data(path, data, method.__str__(), self.data_l_in, descriptions))
+        self.data_l.append(
+            MetaData.from_data(path, data, method.__str__(), self.data_l_in, descriptions)
+        )
         self._to_file(path)
         if html_export:
             to_html(path.metadata_path, path.dir_path)

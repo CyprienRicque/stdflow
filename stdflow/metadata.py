@@ -10,12 +10,8 @@ import pandas as pd
 from stdflow.path import Path
 from stdflow.utils import get_creation_time, string_to_uuid
 
+logging.basicConfig()
 logger = logging.getLogger(__name__)
-
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-
-logger.addHandler(ch)
 logger.setLevel(logging.DEBUG)
 
 
@@ -32,7 +28,9 @@ class MetaData:
     ):
         # self.uuid = uuid_ or str(uuid.uuid4())
         self.file_creation_time = str(get_creation_time(path.full_path_from_root))
-        self.uuid = uuid_ or str(string_to_uuid(f"{path.full_path_from_root}{self.file_creation_time}"))
+        self.uuid = uuid_ or str(
+            string_to_uuid(f"{path.full_path_from_root}{self.file_creation_time}")
+        )
         self.path: Path = path
         self.columns: list[dict] = columns
         self.export_method_used: str = export_method_used
@@ -93,8 +91,12 @@ class MetaData:
             return self.uuid == other.uuid
         raise ValueError(f"other must be of type Path or str, got {type(other)}")
 
+    @property
+    def descriptions(self):
+        return {c["name"]: c["description"] for c in self.columns}
+
     def __str__(self):
-        return f"MetaData(\n\t{self.uuid[:6]=}\n\t{self.path=}\n\t{self.input_files=}\n)"
+        return f"MetaData(\n\tuuid[:6]={self.uuid[:6]}\n\tpath={self.path}\n\tinput_files={self.input_files}\n)"
 
     def __repr__(self):
         return self.__str__()

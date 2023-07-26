@@ -54,8 +54,8 @@ def test_save_merge():
 
     s = Step._from_file("./data/es/step_merge/v_202307241247/metadata.json")
 
-    assert len(s.data_l) == 4, f"{len(s.data_l)=}, {s.data_l=}"
-    assert len(s.data_l_in) == 2, f"{len(s.data_l_in)=}, {s.data_l_in=}"
+    assert len(s.data_l) == 4, f"len(s.data_l)={len(s.data_l)}, s.data_l={s.data_l}"
+    assert len(s.data_l_in) == 2, f"len(s.data_l_in)={len(s.data_l_in)}, s.data_l_in={s.data_l_in}"
 
 
 def test_2_step():
@@ -85,8 +85,8 @@ def test_2_step():
     assert os.path.exists("./data/global/step_es_fr_merge/v_0/metadata.json")
 
     s = Step._from_file("data/global/step_es_fr_merge/v_0/metadata.json")
-    assert len(s.data_l) == 5, f"{len(s.data_l)=}, {s.data_l=}"
-    assert len(s.data_l_in) == 2, f"{len(s.data_l_in)=}, {s.data_l_in=}"
+    assert len(s.data_l) == 5, f"len(s.data_l)={len(s.data_l)}, s.data_l={s.data_l}"
+    assert len(s.data_l_in) == 2, f"len(s.data_l_in)={len(s.data_l_in)}, s.data_l_in={s.data_l_in}"
 
 
 def test_path_as_list():
@@ -115,8 +115,8 @@ def test_path_as_list():
     assert os.path.exists("./data/global/all_combined/step_features/features.csv")
 
     s = Step._from_file("data/global/step_es_fr_merge/v_0/metadata.json")
-    assert len(s.data_l) == 5, f"{len(s.data_l)=}, {s.data_l=}"
-    assert len(s.data_l_in) == 2, f"{len(s.data_l_in)=}, {s.data_l_in=}"
+    assert len(s.data_l) == 5, f"len(s.data_l)={len(s.data_l)}, s.data_l={s.data_l}"
+    assert len(s.data_l_in) == 2, f"len(s.data_l_in)={len(s.data_l_in)}, s.data_l_in={s.data_l_in}"
 
 
 if __name__ == "__main__":

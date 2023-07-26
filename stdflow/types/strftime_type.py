@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import re
-from typing import Literal, Protocol, Union
+
+try:
+    from typing import Literal, Protocol, Union
+except ImportError:
+    from typing_extensions import Literal, Protocol, Union
 
 
 def is_strftime(arg: str) -> bool:
