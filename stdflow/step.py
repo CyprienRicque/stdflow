@@ -85,7 +85,6 @@ class Step(ModuleType):
 
         self._root: str | None = "./data"
 
-    # TODO fix this ugly function
     def load(
             self,
             *,
@@ -151,48 +150,13 @@ class Step(ModuleType):
 
         # do not add the same file twice in self.data_l
         # 1. Keep the file one if same uuid
-        # 2. Replace the file if same full_path
+        # 2. Add if same path but different uuid: same file twice but with different timestamps (error from the dev)
         for new_file in new_files:
-            if new_file in [f for f in self.data_l]:  # file already added: same uuid
-                # logger.debug(f"File {md} already added. Skipping")
-                pass
-            elif new_file.path.full_path_from_root in [
-                f.path.full_path_from_root for f in self.data_l
-            ]:
-                # warnings.warn(
-                #     f"Replacing {new_file} by {file_loaded} as they have the same path but not the same uuid",
-                #     category=ResourceWarning,
-                # )
-                to_rm = [
-                    f
-                    for f in self.data_l
-                    if f.path.full_path_from_root == new_file.path.full_path_from_root
-                ]
-                assert len(to_rm) == 1
-                to_rm = to_rm[0]
-                self.data_l.remove(to_rm)
-                self.data_l.append(new_file)
-            else:
+            if new_file not in [f for f in self.data_l]:  # file already added: same uuid
                 self.data_l.append(new_file)
 
         # file loaded
-
-        if file_loaded in [f for f in self.data_l_in]:  # file already added: same uuid
-            # logger.debug(f"File {md} already added. Skipping")
-            pass
-        elif file_loaded.path.full_path_from_root in [
-            f.path.full_path_from_root for f in self.data_l_in
-        ]:
-            to_rm = [
-                f
-                for f in self.data_l_in
-                if f.path.full_path_from_root == file_loaded.path.full_path_from_root
-            ]
-            assert len(to_rm) == 1
-            to_rm = to_rm[0]
-            self.data_l_in.remove(to_rm)
-            self.data_l_in.append(file_loaded)
-        else:
+        if file_loaded not in [f for f in self.data_l_in]:  # file already added: same uuid
             self.data_l_in.append(file_loaded)
 
         return data

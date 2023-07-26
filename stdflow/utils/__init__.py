@@ -1,13 +1,32 @@
+from __future__ import annotations
+
+import datetime
 import glob
 import os
 import re
 import shutil
 from typing import List, Union
+import uuid
 
 from graphviz import Digraph
 
 from stdflow.config import STEP_PREFIX, VERSION_PREFIX
 from stdflow.html.template import template
+
+
+def get_creation_time(file_path) -> None | datetime.datetime:
+    # Check if file exists
+    if os.path.isfile(file_path):
+        # Get the timestamp when the file was created
+        timestamp = os.path.getctime(file_path)
+
+        # Convert timestamp to datetime
+        creation_time = datetime.datetime.fromtimestamp(timestamp)
+
+        # Return the creation time
+        return creation_time
+    else:
+        return None
 
 
 def get_arg_value(arg, default):
@@ -104,6 +123,10 @@ def to_html(metadata_file, dest):
     # dump the content of template variable in dest/template.html
     with open(os.path.join(dest, "template.html"), "w") as html_file:
         html_file.write(template)
+
+
+def string_to_uuid(input_string):
+    return uuid.uuid5(uuid.NAMESPACE_DNS, input_string)
 
 
 #     # Write output to HTML file
