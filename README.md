@@ -102,5 +102,5 @@ TODO: setup the situation in which you chain small function in a directory and i
 TODO: a processing step can delete the loaded files.
 TODO: common steps of moving a file / deleting a file
 TODO: setting export=False ? delete_after_n_usage=4 ? 
-
+TODO: version :last should use the metadata (datetime in file and of the file to know which one is the last)
 

@@ -8,6 +8,13 @@ import uuid
 import warnings
 from datetime import datetime
 
+from utils.caller_metadata import (
+    get_caller_metadata,
+    get_calling_package__,
+    get_notebook_path,
+    get_notebook_name,
+)
+
 try:
     from typing import Any, Literal, Optional, Tuple, Union
 except ImportError:
@@ -73,18 +80,19 @@ class Step(ModuleType):
         self._step_in: str | None = None
         self._version_in: str | None = ":last"
         self._attrs_in: str | list[str] | None = None
-        self._file_name_in: str | None = ":auto"  # TODO
+        self._file_name_in: str | None = ":default"  # TODO
         self._method_in: str | object | None = ":auto"  # TODO
         self._root_in: str | None = ":default"
 
         self._step_out: str | None = None
         self._version_out: str | None = DEFAULT_DATE_VERSION_FORMAT
         self._attrs_out: str | list[str] | None = None
-        self._file_name_out: str | None = None
+        self._file_name_out: str | None = ":default"  # TODO
         self._method_out: str | object | None = ":auto"
         self._root_out: str | None = ":default"
 
         self._root: str | None = "./data"
+        self._file_name: str | None = ":auto"  # TODO
 
     def load(
         self,
@@ -112,10 +120,23 @@ class Step(ModuleType):
         :param kwargs: kwargs to send to the method
         :return:
         """
+        caller_file_name, caller_function, caller_package = get_caller_metadata()
+        if "ipykernel" in caller_file_name:
+            notebook_path, notebook_name = get_notebook_path()
+            logger.info(f"Called from jupyter notebook {notebook_name} in {notebook_path}")
+        elif caller_function == '<module>':
+            logger.info(f"Called from python file {caller_file_name}")
+        else:
+            logger.info(f"Called from function {caller_function} in {caller_file_name}")
+
+        logger.debug(f"caller_metadata: {caller_file_name, caller_function, caller_package}")
+        # other = get_calling_package__()
+        # logger.info(f"get_calling_package: {other}")
+
         # if arguments are None, use step level arguments
         root = get_arg_value(get_arg_value(root, self._root_in), self._root)
         attrs = get_arg_value(attrs, self._attrs_in)
-        file_name = get_arg_value(file_name, self._file_name_in)
+        file_name = get_arg_value(get_arg_value(file_name, self._file_name_in), self._file_name)
         step = get_arg_value(step, self._step_in)
         version = get_arg_value(version, self._version_in)
         method = get_arg_value(method, self._method_in)
@@ -203,7 +224,7 @@ class Step(ModuleType):
         attrs = get_arg_value(attrs, self._attrs_out)
         step = get_arg_value(step, self._step_out)
         version = get_arg_value(version, self._version_out)
-        file = get_arg_value(file_name, self._file_name_out)
+        file = get_arg_value(get_arg_value(file_name, self._file_name_out), self._file_name)
         method = get_arg_value(method, self._method_out)
 
         if Strftime.__call__(version):
@@ -242,18 +263,19 @@ class Step(ModuleType):
         self._step_in: str | None = None
         self._version_in: str | None = ":last"
         self._attrs_in: str | list[str] | None = None
-        self._file_name_in: str | None = ":auto"  # TODO
+        self._file_name_in: str | None = ":default"  # TODO
         self._method_in: str | object | None = ":auto"  # TODO
         self._root_in: str | None = ":default"
 
         self._step_out: str | None = None
-        self._version_out: str | None = f":strftime {DEFAULT_DATE_VERSION_FORMAT}"  # TODO  date_string = date_string.split(" ")[1]
+        self._version_out: str | None = DEFAULT_DATE_VERSION_FORMAT
         self._attrs_out: str | list[str] | None = None
-        self._file_name_out: str | None = None
+        self._file_name_out: str | None = ":default"  # TODO
         self._method_out: str | object | None = ":auto"
         self._root_out: str | None = ":default"
 
         self._root: str | None = "./data"
+        self._file_name: str | None = ":auto"  # TODO
 
     # === Private === #
 
@@ -440,3 +462,14 @@ class Step(ModuleType):
     @root.setter
     def root(self, root: str) -> None:
         self._root = root
+
+    @property
+    def file_name(self) -> str:
+        return self._file_name
+
+    @file_name.setter
+    def file_name(self, file_name: str) -> None:
+        self._file_name = file_name
+
+
+

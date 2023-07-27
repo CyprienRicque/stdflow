@@ -67,11 +67,11 @@ class Module(object):
         self.step.attrs_in = path
 
     @property
-    def file_in(self) -> str:
+    def file_name_in(self) -> str:
         return self.step.file_name_in
 
-    @file_in.setter
-    def file_in(self, file_name: str) -> None:
+    @file_name_in.setter
+    def file_name_in(self, file_name: str) -> None:
         self.step.file_name_in = file_name
 
     @property
@@ -145,6 +145,14 @@ class Module(object):
     @root.setter
     def root(self, root: str) -> None:
         self.step.root = root
+
+    @property
+    def file_name(self) -> str:
+        return self.step.file_name
+
+    @file_name.setter
+    def file_name(self, file_name: str) -> None:
+        self.step.file_name = file_name
 
     def load(
         self,
@@ -264,12 +272,12 @@ def attrs_in(path: list | str) -> None:
 
 
 @property
-def file_in() -> str:
+def file_name_in() -> str:
     ...
 
 
-@file_in.setter
-def file_in(file_name: str) -> None:
+@file_name_in.setter
+def file_name_in(file_name: str) -> None:
     ...
 
 
@@ -360,6 +368,16 @@ def root() -> str:
 
 @root.setter
 def root(root: str) -> None:
+    ...
+
+
+@property
+def file_name() -> str:
+    ...
+
+
+@file_name.setter
+def file_name(file_name: str) -> None:
     ...
 
 
