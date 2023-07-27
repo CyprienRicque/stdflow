@@ -379,7 +379,6 @@ def load(
 
 
 def save(
-    self,
     data: pd.DataFrame,
     *,
     root: str | Literal[":default"] = ":default",
