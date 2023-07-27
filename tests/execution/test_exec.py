@@ -3,7 +3,7 @@ import os
 import random
 import string
 
-from utils.execution import run_python_file, run_function, run_notebook
+from stdflow.utils.execution import run_python_file, run_function, run_notebook
 
 
 class TestEnvExport(unittest.TestCase):
