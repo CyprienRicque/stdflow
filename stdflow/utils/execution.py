@@ -1,5 +1,3 @@
-import os
-import nbconvert
 import nbformat
 from traitlets.config import Config
 from nbconvert.preprocessors import ExecutePreprocessor
