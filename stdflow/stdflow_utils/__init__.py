@@ -9,7 +9,7 @@ import uuid
 from typing import List, Union
 
 from stdflow.config import STEP_PREFIX, VERSION_PREFIX
-from stdflow.html.template import template
+from stdflow.stdflow_html.template import template
 
 # from graphviz import Digraph
 

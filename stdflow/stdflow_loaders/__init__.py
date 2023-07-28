@@ -1,4 +1,4 @@
-from stdflow.loaders.csv import convert_data, load_csv_files
+from stdflow.stdflow_loaders.csv import convert_data, load_csv_files
 
 
 class DataLoader:

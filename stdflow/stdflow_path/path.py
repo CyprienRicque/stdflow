@@ -10,12 +10,12 @@ except ImportError:
     from typing_extensions import Literal, Optional, OrderedDict
 
 from stdflow.config import STEP_PREFIX, VERSION_PREFIX
-from stdflow.types.strftime_type import Strftime
-from stdflow.utils import detect_folders, fstep, fv, remove_dir, retrieve_from_path
+from stdflow.stdflow_types.strftime_type import Strftime
+from stdflow.stdflow_utils import detect_folders, fstep, fv, remove_dir, retrieve_from_path
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 class Path(ABC):

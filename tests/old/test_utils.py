@@ -1,4 +1,4 @@
-from stdflow.utils import remove_dir
+from stdflow.stdflow_utils import remove_dir
 
 
 def test_remove_dir():

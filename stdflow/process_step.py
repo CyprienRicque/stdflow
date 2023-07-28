@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from stdflow.path.process_path import ProcessPath
-from stdflow.utils.execution import run_notebook, run_function
+from stdflow.stdflow_path.process_path import ProcessPath
+from stdflow.stdflow_utils.execution import run_notebook, run_function
 
 try:
     from typing import Literal, Protocol, Union
 except ImportError:
     from typing_extensions import Literal, Protocol, Union
 
-from stdflow.path import DataPath
+from stdflow.stdflow_path import DataPath
 
 
 class ProcessStep:

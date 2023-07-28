@@ -1,6 +1,6 @@
 import os
 
-from stdflow.path import DataPath
+from stdflow.stdflow_path import DataPath
 
 
 def setup():

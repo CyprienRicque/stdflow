@@ -4,15 +4,16 @@ import json
 import logging
 import os
 import uuid
+from typing import Any
 
 import pandas as pd
 
-from stdflow.path import DataPath
-from stdflow.utils import get_creation_time, string_to_uuid
+from stdflow.stdflow_path import DataPath
+from stdflow.stdflow_utils import get_creation_time, string_to_uuid
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 class MetaData:
@@ -65,23 +66,52 @@ class MetaData:
     def from_data(
         cls,
         path: DataPath,
-        data: pd.DataFrame,
+        data: pd.DataFrame | dict | Any,
         export_method_used: str = "unknown",
         input_files: list["MetaData"] = None,
         descriptions: dict[str, str] = None,
     ):
         if input_files is not None:
             input_files = list({"uuid": file.uuid} for file in input_files)
-        columns = list(
-            {
-                "name": c,
-                "type": t.name,
-                "description": (
-                    descriptions.get(c, None) if isinstance(descriptions, dict) else None
-                ),
-            }
-            for c, t in zip(data.columns, data.dtypes)
-        )
+
+        # check if data is a dict with each value being a dataframe
+        if isinstance(data, dict) and all(
+            isinstance(v, pd.DataFrame) for v in data.values()
+        ):  # multiple sheets from excel file
+            columns = list(
+                {
+                    "name": c,
+                    "type": t.name,
+                    "description": (
+                        descriptions.get(c, None) if isinstance(descriptions, dict) else None
+                    ),
+                }
+                for data in data.values()
+                for c, t in zip(data.columns, data.dtypes)
+            )
+        elif type(data) == dict:
+            columns = list(
+                {
+                    "name": k,
+                    "type": type(v).__name__,
+                    "description": (descriptions.get(k, None) if isinstance(descriptions, dict) else None),
+                }
+                for k, v in data.items()
+            )
+        elif type(data) == pd.DataFrame:
+            columns = list(
+                {
+                    "name": c,
+                    "type": t.name,
+                    "description": (
+                        descriptions.get(c, None) if isinstance(descriptions, dict) else None
+                    ),
+                }
+                for c, t in zip(data.columns, data.dtypes)
+            )
+        else:
+            logger.warning(f"unknown data type: {type(data)}")
+            columns = []
         return cls(path, columns, export_method_used, input_files or [], uuid_=None)
 
     def __eq__(self, other):

@@ -10,14 +10,14 @@ except ImportError:
 
 import pandas as pd
 
-__version__ = "0.0.7"
+__version__ = "0.0.20"
 
 import logging
 import sys
 
-from stdflow.loaders import DataLoader
+from stdflow.stdflow_loaders import DataLoader
 from stdflow.step import GStep, Step
-from stdflow.types.strftime_type import Strftime
+from stdflow.stdflow_types.strftime_type import Strftime
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -149,6 +149,14 @@ class Module(object):
     @property
     def file_name(self) -> str:
         return self.step.file_name
+
+    @property
+    def attrs(self) -> list | str:
+        return self.step.attrs
+
+    @attrs.setter
+    def attrs(self, attrs: list | str) -> None:
+        self.step.attrs = attrs
 
     @file_name.setter
     def file_name(self, file_name: str) -> None:

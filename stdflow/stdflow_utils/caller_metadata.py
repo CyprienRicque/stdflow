@@ -3,7 +3,7 @@ import os
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 def get_caller_metadata():
@@ -40,9 +40,14 @@ def get_notebook_path():
         full_path = ipynbname.path()
         name = os.path.basename(full_path)
         path = os.path.dirname(full_path)
+        if path is None:
+            try:
+                return os.getcwd(), name
+            except:
+                return None, None
         return path, name
-    except FileNotFoundError:
-        return None
+    except:
+        return None, None
 
 
 def get_calling_package__():

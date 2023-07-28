@@ -8,7 +8,7 @@ import uuid
 import warnings
 from datetime import datetime
 
-from utils.caller_metadata import (
+from stdflow.stdflow_utils.caller_metadata import (
     get_caller_metadata,
     get_calling_package__,
     get_notebook_path,
@@ -26,17 +26,19 @@ import pandas as pd
 
 from stdflow.config import DEFAULT_DATE_VERSION_FORMAT, INFER
 from stdflow.metadata import MetaData, get_file, get_file_md
-from stdflow.path import DataPath
-from stdflow.types.strftime_type import Strftime
-from stdflow.utils import get_arg_value, to_html
+from stdflow.stdflow_path import DataPath
+from stdflow.stdflow_types.strftime_type import Strftime
+from stdflow.stdflow_utils import get_arg_value, to_html
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 loaders = dict(
     csv=pd.read_csv,
     excel=pd.read_excel,
+    xlsx=pd.read_excel,
+    xls=pd.read_excel,
     parquet=pd.read_parquet,
     json=pd.read_json,
     pickle=pd.read_pickle,
@@ -48,6 +50,8 @@ loaders = dict(
 savers = dict(
     csv=pd.DataFrame.to_csv,
     excel=pd.DataFrame.to_excel,
+    xlsx=pd.DataFrame.to_excel,
+    xls=pd.DataFrame.to_excel,
     parquet=pd.DataFrame.to_parquet,
     json=pd.DataFrame.to_json,
     pickle=pd.DataFrame.to_pickle,
@@ -79,20 +83,21 @@ class Step(ModuleType):
         # Default values of load and save functions
         self._step_in: str | None = None
         self._version_in: str | None = ":last"
-        self._attrs_in: str | list[str] | None = None
+        self._attrs_in: str | list[str] | None = ":default"
         self._file_name_in: str | None = ":default"  # TODO
         self._method_in: str | object | None = ":auto"  # TODO
         self._root_in: str | None = ":default"
 
         self._step_out: str | None = None
         self._version_out: str | None = DEFAULT_DATE_VERSION_FORMAT
-        self._attrs_out: str | list[str] | None = None
+        self._attrs_out: str | list[str] | None = ":default"
         self._file_name_out: str | None = ":default"  # TODO
         self._method_out: str | object | None = ":auto"
         self._root_out: str | None = ":default"
 
         self._root: str | None = "./data"
         self._file_name: str | None = ":auto"  # TODO
+        self._attrs: str | list[str] | None = None
 
     def load(
         self,
@@ -123,11 +128,11 @@ class Step(ModuleType):
         caller_file_name, caller_function, caller_package = get_caller_metadata()
         if "ipykernel" in caller_file_name:
             notebook_path, notebook_name = get_notebook_path()
-            logger.info(f"Called from jupyter notebook {notebook_name} in {notebook_path}")
+            logger.debug(f"Called from jupyter notebook {notebook_name} in {notebook_path}")
         elif caller_function == '<module>':
-            logger.info(f"Called from python file {caller_file_name}")
+            logger.debug(f"Called from python file {caller_file_name}")
         else:
-            logger.info(f"Called from function {caller_function} in {caller_file_name}")
+            logger.debug(f"Called from function {caller_function} in {caller_file_name}")
 
         logger.debug(f"caller_metadata: {caller_file_name, caller_function, caller_package}")
         # other = get_calling_package__()
@@ -135,7 +140,7 @@ class Step(ModuleType):
 
         # if arguments are None, use step level arguments
         root = get_arg_value(get_arg_value(root, self._root_in), self._root)
-        attrs = get_arg_value(attrs, self._attrs_in)
+        attrs = get_arg_value(get_arg_value(attrs, self._attrs_in), self._attrs)
         file_name = get_arg_value(get_arg_value(file_name, self._file_name_in), self._file_name)
         step = get_arg_value(step, self._step_in)
         version = get_arg_value(version, self._version_in)
@@ -221,7 +226,7 @@ class Step(ModuleType):
         """
         # if arguments are None, use step level arguments
         root = get_arg_value(get_arg_value(root, self._root_out), self._root)
-        attrs = get_arg_value(attrs, self._attrs_out)
+        attrs = get_arg_value(get_arg_value(attrs, self._attrs_out), self._attrs)
         step = get_arg_value(step, self._step_out)
         version = get_arg_value(version, self._version_out)
         file = get_arg_value(get_arg_value(file_name, self._file_name_out), self._file_name)
@@ -262,20 +267,21 @@ class Step(ModuleType):
         # Default values of load and save functions
         self._step_in: str | None = None
         self._version_in: str | None = ":last"
-        self._attrs_in: str | list[str] | None = None
+        self._attrs_in: str | list[str] | None = ":default"
         self._file_name_in: str | None = ":default"  # TODO
         self._method_in: str | object | None = ":auto"  # TODO
         self._root_in: str | None = ":default"
 
         self._step_out: str | None = None
         self._version_out: str | None = DEFAULT_DATE_VERSION_FORMAT
-        self._attrs_out: str | list[str] | None = None
+        self._attrs_out: str | list[str] | None = ":default"
         self._file_name_out: str | None = ":default"  # TODO
         self._method_out: str | object | None = ":auto"
         self._root_out: str | None = ":default"
 
         self._root: str | None = "./data"
         self._file_name: str | None = ":auto"  # TODO
+        self._attrs: str | list[str] | None = None
 
     # === Private === #
 
@@ -380,8 +386,8 @@ class Step(ModuleType):
         return self._attrs_in
 
     @attrs_in.setter
-    def attrs_in(self, path: list | str) -> None:
-        self._attrs_in = path
+    def attrs_in(self, attrs: list | str) -> None:
+        self._attrs_in = attrs
 
     @property
     def file_name_in(self) -> str:
@@ -428,8 +434,8 @@ class Step(ModuleType):
         return self._attrs_out
 
     @attrs_out.setter
-    def attrs_out(self, path: list | str) -> None:
-        self._attrs_out = path
+    def attrs_out(self, attrs: list | str) -> None:
+        self._attrs_out = attrs
 
     @property
     def file_name_out(self) -> str:
@@ -471,5 +477,11 @@ class Step(ModuleType):
     def file_name(self, file_name: str) -> None:
         self._file_name = file_name
 
+    @property
+    def attrs(self) -> list | str:
+        return self._attrs
 
+    @attrs.setter
+    def attrs(self, attrs: list | str) -> None:
+        self._attrs = attrs
 
