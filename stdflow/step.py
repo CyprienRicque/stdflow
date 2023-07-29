@@ -73,31 +73,57 @@ class GStep:
 
 
 class Step(ModuleType):
-    def __init__(self, name: str = "Step"):
-        super().__init__(name)
+    def __init__(
+        self,
+        step_in: str | None = None,
+        version_in: str | None = ":last",
+        attrs_in: str | list[str] | None = ":default",
+        file_name_in: str | None = ":default",
+        method_in: str | object | None = ":auto",
+        root_in: str | None = ":default",
+
+        step_out: str | None = None,
+        version_out: str | None = DEFAULT_DATE_VERSION_FORMAT,
+        attrs_out: str | list[str] | None = ":default",
+        file_name_out: str | None = ":default",
+        method_out: str | object | None = ":auto",
+        root_out: str | None = ":default",
+
+        root: str | None = "./data",
+        attrs: str | list[str] | None = None,
+        file_name: str | None = ":auto",
+
+        data_l: list[MetaData] = None,
+        data_l_in: list[MetaData] = None,
+
+    ):
+        super().__init__("Step")
+
         # === Exported === #
-        self.data_l: list[MetaData] = []
-        self.data_l_in: list[MetaData] = []  # direct input to this step file
+        # all inputs to this step
+        self.data_l = data_l if data_l is not None else []
+        # direct input to this step
+        self.data_l_in = data_l_in if data_l_in is not None else []
         # ================ #
 
         # Default values of load and save functions
-        self._step_in: str | None = None
-        self._version_in: str | None = ":last"
-        self._attrs_in: str | list[str] | None = ":default"
-        self._file_name_in: str | None = ":default"  # TODO
-        self._method_in: str | object | None = ":auto"  # TODO
-        self._root_in: str | None = ":default"
+        self._step_in = step_in
+        self._version_in = version_in
+        self._attrs_in = attrs_in
+        self._file_name_in = file_name_in
+        self._method_in = method_in
+        self._root_in = root_in
 
-        self._step_out: str | None = None
-        self._version_out: str | None = DEFAULT_DATE_VERSION_FORMAT
-        self._attrs_out: str | list[str] | None = ":default"
-        self._file_name_out: str | None = ":default"  # TODO
-        self._method_out: str | object | None = ":auto"
-        self._root_out: str | None = ":default"
+        self._step_out = step_out
+        self._version_out = version_out
+        self._attrs_out = attrs_out
+        self._file_name_out = file_name_out
+        self._method_out = method_out
+        self._root_out = root_out
 
-        self._root: str | None = "./data"
-        self._file_name: str | None = ":auto"  # TODO
-        self._attrs: str | list[str] | None = None
+        self._root = root
+        self._file_name = file_name
+        self._attrs = attrs
 
     def load(
         self,
@@ -125,6 +151,10 @@ class Step(ModuleType):
         :param kwargs: kwargs to send to the method
         :return:
         """
+        if verbose:
+            logger.setLevel(logging.INFO)
+        else:
+            logger.setLevel(logging.WARNING)
         caller_file_name, caller_function, caller_package = get_caller_metadata()
         if "ipykernel" in caller_file_name:
             notebook_path, notebook_name = get_notebook_path()

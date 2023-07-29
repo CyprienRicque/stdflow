@@ -6,7 +6,7 @@ import stdflow as sf
 
 def load_and_process_digi_sentiments_indonesia(catalog, brand_dict=None):
     print("load_and_process_digi_sentiments_indonesia")
-    conf = catalog["digimind_sentiments"]
+    conf = catalog["twitter_sentiments"]
 
     step = sf.Step()
     step.reset()
@@ -36,7 +36,7 @@ def load_digi_mentions_indonesia(step):
 
 def load_and_process_digi_mentions_indonesia(catalog, brand_dict=None):
     print("load_and_process_digi_mentions_indonesia")
-    conf = catalog["digimind_mentions"]
+    conf = catalog["twitter_mentions"]
 
     step = sf.Step()
     step.reset()
@@ -54,7 +54,7 @@ def load_and_process_digi_mentions_indonesia(catalog, brand_dict=None):
 
 def load_and_process_digi_indonesia(catalog, brand_dict=None):
     print("load_and_process_digi_indonesia")
-    conf = catalog["digimind"]
+    conf = catalog["twitter"]
 
     step = sf.Step()
     step.reset()
@@ -69,8 +69,8 @@ def load_and_process_digi_indonesia(catalog, brand_dict=None):
 def test_ms():
     load_and_process_digi_indonesia(
         {
-            "digimind": {"attrs_out": "oui", "step_out": "non"},
-            "digimind_mentions": {"attrs": "oui", "step_out": "non", "step_in": "non"},
-            "digimind_sentiments": {"attrs": "oui", "step_out": "non", "step_in": "non"},
+            "twitter": {"attrs_out": "oui", "step_out": "non"},
+            "twitter_mentions": {"attrs": "oui", "step_out": "non", "step_in": "non"},
+            "twitter_sentiments": {"attrs": "oui", "step_out": "non", "step_in": "non"},
         }
     )

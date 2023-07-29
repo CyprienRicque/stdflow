@@ -4,6 +4,7 @@ import logging
 import os
 
 from stdflow.stdflow_path import Path
+from stdflow_utils.listing import list_csv_files
 
 try:
     from typing import Literal, Optional
@@ -26,7 +27,7 @@ class DataPath(Path):
         attrs: list | None | str = None,
         step_name: str | None = None,
         version: str | Literal[":last", ":first"] = ":last",
-        file_name: str = None,
+        file_name: str | Literal[":auto"] = None,
     ):
         """
         At this stage all information are present except the version which is to be detected if not specified
@@ -36,8 +37,9 @@ class DataPath(Path):
         :param version: last part of the full_path. one of [":last", ":first", "<version_name>", None]
         :param file_name: file name (optional)
         """
-        # if step is str and contains step_, remove it
         super().__init__(root, file_name)
+
+        # if step is str and contains step_, remove it
         if isinstance(step_name, str) and step_name.startswith(STEP_PREFIX):
             step_name = step_name[len(STEP_PREFIX) :]
         # if version is str and contains v_, remove it
@@ -54,6 +56,20 @@ class DataPath(Path):
             self.version = self.detect_version(self.dir_path, version)
         elif version is not None:
             self.version = version
+
+        if file_name == ":auto":
+            self.file_name = self.detect_file_name()
+
+    def detect_file_name(self):
+        if not os.path.isdir(self.dir_path):
+            logger.error(f"Path {self.dir_path} does not exist")
+        files = list_csv_files(self.dir_path)
+        if len(files) == 1:
+            logger.debug(f"Using file {files[0]}")
+            return files[0]
+        else:
+            logger.warning(f"Multiple files found in {self.dir_path}: {files}")
+            return None
 
     def detect_version(self, path, version_type):
         if version_type not in [":last", ":first"]:
