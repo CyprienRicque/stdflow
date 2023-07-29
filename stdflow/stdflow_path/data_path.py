@@ -4,7 +4,7 @@ import logging
 import os
 
 from stdflow.stdflow_path import Path
-from stdflow_utils.listing import list_csv_files
+from stdflow.stdflow_utils.listing import list_csv_files
 
 try:
     from typing import Literal, Optional
