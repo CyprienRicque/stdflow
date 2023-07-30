@@ -57,7 +57,10 @@ class Path(ABC):
 
     @property
     def extension(self):
-        return os.path.splitext(self.file_name)[-1][1:]
+        if isinstance(self.file_name, str):
+            return os.path.splitext(self.file_name)[-1][1:]
+        else:
+            return None
 
     def __str__(self):
         return self.full_path

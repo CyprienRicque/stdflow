@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from stdflow.stdflow_path.process_path import ProcessPath
-from stdflow.stdflow_utils.execution import run_notebook, run_function
+from stdflow.stdflow_utils.execution import run_notebook, run_function, run_python_file
 
 try:
     from typing import Literal, Protocol, Union

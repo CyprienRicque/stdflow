@@ -9,8 +9,7 @@ import uuid
 from typing import List, Union
 
 from stdflow.config import STEP_PREFIX, VERSION_PREFIX
-from stdflow.stdflow_html.template import template
-
+from stdflow.stdflow_viz import index_html, main_js, styles_css
 # from graphviz import Digraph
 
 
@@ -98,7 +97,7 @@ def remove_dir(path, dir_to_remove):
 #     dot.render("pipeline")
 
 
-def to_html(metadata_file, dest):
+def export_viz_html(metadata_file, dest):
     import json
 
     from jinja2 import Environment, FileSystemLoader
@@ -113,16 +112,17 @@ def to_html(metadata_file, dest):
     # env = Environment(loader=FileSystemLoader("."))
     # template = env.get_template("stdflow/html/template.html")
 
-    # Convert to JavaScript
-    js_data = json.dumps(metadata)
+    # create recursive directory structure
+    os.makedirs(os.path.join(dest, "metadata_viz"), exist_ok=True)
 
-    # Write JS data into HTML file
-    with open(os.path.join(dest, "data.js"), "w") as js_file:
-        js_file.write(f"var data = {js_data};")
+    with open(os.path.join(dest, "metadata_viz", "index.html"), "w") as html_file:
+        html_file.write(index_html)
 
-    # dump the content of template variable in dest/template.html
-    with open(os.path.join(dest, "template.html"), "w") as html_file:
-        html_file.write(template)
+    with open(os.path.join(dest, "metadata_viz", "main.js"), "w") as js_file:
+        js_file.write(main_js)
+
+    with open(os.path.join(dest, "metadata_viz", "styles.css"), "w") as css_file:
+        css_file.write(styles_css)
 
 
 def string_to_uuid(input_string):
@@ -148,7 +148,7 @@ def string_to_uuid(input_string):
 
 
 if __name__ == "__main__":
-    to_html(
+    export_viz_html(
         dest="./",
         metadata={
             "files": [

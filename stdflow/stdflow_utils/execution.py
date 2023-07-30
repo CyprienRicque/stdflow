@@ -5,48 +5,71 @@ from nbconvert.preprocessors import ExecutePreprocessor
 import os
 import importlib.util
 
+import logging
 
-def run_notebook(path, env_vars=None):
+
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+
+def run_notebook(path, env_vars=None, **kwargs):
     # Set environment variables
-    if env_vars is not None:
-        os.environ.update(env_vars)
-
-    # Load notebook
-    with open(path) as f:
-        nb = nbformat.read(f, as_version=4)
-
-    # list ipykernels
-    # jupyter kernelspec list
-    # show current default ipykernel
-    # jupyter kernelspec list --json
-    # list all ipykernels
-    # jupyter kernelspec list --json
-
-
-    # Configure and run the notebook
-    c = Config()
-    print(c)
-    # c.ExecutePreprocessor.timeout = 600   # Set execution timeout
-    # c.ExecutePreprocessor.kernel_name = 'py37'
-    ep = ExecutePreprocessor(config=c)
-
     try:
-        out = ep.preprocess(nb)
-        print(f"notebook execution result: {out}")
+        if env_vars is not None:
+            logger.debug(f"Setting environment variables: {env_vars}")
+            print(f"Setting environment variables: {env_vars}")
+            os.environ.update(env_vars)
+
+        # Load notebook
+        with open(path) as f:
+            nb = nbformat.read(f, as_version=4)
+
+        # list ipykernels
+        # jupyter kernelspec list
+        # show current default ipykernel
+        # jupyter kernelspec list --json
+        # list all ipykernels
+        # jupyter kernelspec list --json
+
+
+        # Configure and run the notebook
+        c = Config()
+        if "timeout" in kwargs:
+            c.ExecutePreprocessor.timeout = kwargs["timeout"]
+        # c.ExecutePreprocessor.timeout = 600   # Set execution timeout
+
+        if "kernel_name" in kwargs:
+            c.ExecutePreprocessor.kernel_name = kwargs["kernel_name"]
+        # c.ExecutePreprocessor.kernel_name = 'py37'
+        print(c)
+        ep = ExecutePreprocessor(config=c)
+
+        try:
+            out = ep.preprocess(nb)
+            print(f"notebook execution result: {out}")
+        except Exception as e:
+            print(f"Error executing the notebook: {str(e)}")
+            raise
     except Exception as e:
         print(f"Error executing the notebook: {str(e)}")
         raise
+    else:
+        # delete environment variables
+        if env_vars is not None:
+            for key in env_vars.keys():
+                del os.environ[key]
 
     print("Notebook executed successfully.")
 
 
-def run_function(module_path, function_name, env_vars=None):
+def run_function(path, function_name, env_vars=None):
     # Set environment variables
     if env_vars is not None:
         os.environ.update(env_vars)
 
     # Load module
-    spec = importlib.util.spec_from_file_location("module.name", module_path)
+    spec = importlib.util.spec_from_file_location("module.name", path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
@@ -63,13 +86,13 @@ def run_function(module_path, function_name, env_vars=None):
     print("Function executed successfully.")
 
 
-def run_python_file(file_path, env_vars=None):
+def run_python_file(path, env_vars=None):
     # Set environment variables
     if env_vars is not None:
         os.environ.update(env_vars)
 
     # Read file
-    with open(file_path, 'r') as file:
+    with open(path, 'r') as file:
         python_code = file.read()
 
     # Execute Python code

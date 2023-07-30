@@ -73,7 +73,7 @@ The recommended way to use it is:
 
 **Best Practices**:
 - Do not use ```sf.reset``` as part of your final code
-- Do not export to multiple path (path + attr_1/attr_2/.../attr_n + step_name) in the same step: only multiple versions
+- In one step, export only to one path (except the version). meaning for one step only one combination of attrs and step_name
 - Do not set sub-dirs within the export (i.e. version folder is the last depth). if you need similar operation 
   for different datasets, create pipelines
 
@@ -83,7 +83,7 @@ TODO: add pipelines
 TODO: add excalidraw schema
 TODO: add import export of other data types: [structured, unstructured, semi-structured]
 TODO: add test loop
-TODO: architecture with
+TODO: example architecture with
 - data
 - pipelines
 - models
@@ -97,10 +97,12 @@ TODO: architecture with
 - README.md
 - .gitignore
 TODO: setup pipelines_root, models_root, tests_root, notebooks_root, src_root, config_root, logs_root, reports_root
+TODO: common steps of moving a file / deleting a file (requires pipeline)
+TODO: version :last should use the metadata (datetime in file and of the file to know which one is the last)
+TODO: option to delete previous version when saving
+
+
 TODO: setup the situation in which you chain small function in a directory and it deletes the previous file 
   before creating a new one with another name. in the chain it will appear with different names showing the process
 TODO: a processing step can delete the loaded files.
-TODO: common steps of moving a file / deleting a file
 TODO: setting export=False ? delete_after_n_usage=4 ? 
-TODO: version :last should use the metadata (datetime in file and of the file to know which one is the last)
-

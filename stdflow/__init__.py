@@ -10,7 +10,7 @@ except ImportError:
 
 import pandas as pd
 
-__version__ = "0.0.22"
+__version__ = "0.0.26"
 
 import logging
 import sys
@@ -172,6 +172,7 @@ class Module(object):
         file_name: str | Literal[":default", ":auto"] = ":default",
         method: str | object | Literal[":default", ":auto"] = ":default",
         descriptions: bool = False,
+        file_glob: bool = False,
         verbose: bool = False,
         **kwargs,
     ) -> Tuple[Any, dict] | Any:
@@ -182,6 +183,8 @@ class Module(object):
             version=version,
             file_name=file_name,
             method=method,
+            descriptions=descriptions,
+            file_glob=file_glob,
             verbose=verbose,
             **kwargs,
         )
@@ -196,7 +199,8 @@ class Module(object):
         version: str | None | Literal[":default"] | Strftime = ":default",
         file_name: str | Literal[":default", ":auto"] = ":default",
         method: str | object | Literal[":default", ":auto"] = ":default",
-        html_export: bool = ":default",
+        descriptions: dict[str | str] | None = None,
+        export_viz_tool: bool = ":default",
         verbose: bool = False,
         **kwargs,
     ):
@@ -208,13 +212,17 @@ class Module(object):
             version=version,
             file_name=file_name,
             method=method,
-            html_export=html_export,
+            descriptions=descriptions,
+            export_viz_tool=export_viz_tool,
             verbose=verbose,
             **kwargs,
         )
 
     def reset(self):
         return self.step.reset()
+
+    def var(self, key, value, force=False):
+        return self.step.var(key, value, force=force)
 
 
 if __name__ == "__main__":  # test if run as a script
@@ -398,6 +406,7 @@ def load(
     file_name: str | Literal[":default", ":auto"] = ":default",
     method: str | object | Literal[":default", ":auto"] = ":default",
     descriptions: bool = False,
+    file_glob: bool = False,
     verbose: bool = False,
     **kwargs,
 ) -> Tuple[Any, dict] | Any:
@@ -413,7 +422,8 @@ def save(
     version: str | None | Literal[":default"] | Strftime = ":default",
     file_name: str | Literal[":default", ":auto"] = ":default",
     method: str | object | Literal[":default", ":auto"] = ":default",
-    html_export: bool = ":default",
+    descriptions: dict[str | str] | None = None,
+    export_viz_tool: bool = ":default",
     verbose: bool = False,
     **kwargs,
 ):
@@ -421,4 +431,8 @@ def save(
 
 
 def reset():
+    ...
+
+
+def var(key, value, force=False):
     ...

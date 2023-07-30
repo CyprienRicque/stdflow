@@ -169,3 +169,5 @@ demo/**/*.json
 demo/**/*.html
 
 flow.excalidraw
+
+*credentials*

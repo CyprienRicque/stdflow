@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import logging
 import os
+import warnings
 
 from stdflow.stdflow_path import Path
-from stdflow.stdflow_utils.listing import list_csv_files
+from stdflow.stdflow_utils.listing import list_csv_files, list_files_glob, list_excel_files
 
 try:
     from typing import Literal, Optional
@@ -28,6 +29,7 @@ class DataPath(Path):
         step_name: str | None = None,
         version: str | Literal[":last", ":first"] = ":last",
         file_name: str | Literal[":auto"] = None,
+        glob: bool = False,
     ):
         """
         At this stage all information are present except the version which is to be detected if not specified
@@ -57,19 +59,28 @@ class DataPath(Path):
         elif version is not None:
             self.version = version
 
-        if file_name == ":auto":
-            self.file_name = self.detect_file_name()
+        if file_name == ":auto" or glob is True:
+            self.file_name = self.detect_file_name(file_name, glob=glob)
 
-    def detect_file_name(self):
+    def detect_file_name(self, file_name, glob=False):
         if not os.path.isdir(self.dir_path):
             logger.error(f"Path {self.dir_path} does not exist")
-        files = list_csv_files(self.dir_path)
+        if glob is True and file_name is not None and file_name is not ":auto":
+            files = list_files_glob(self.dir_path, file_name)
+        else:
+            files = list_csv_files(self.dir_path)
+            if not files:
+                files = list_excel_files(self.dir_path)
         if len(files) == 1:
             logger.debug(f"Using file {files[0]}")
             return files[0]
+        elif len(files):
+            logger.warning(f"Cannot use auto file detection:"
+                           f"Multiple files found in {self.dir_path}: {files}")
         else:
-            logger.warning(f"Multiple files found in {self.dir_path}: {files}")
-            return None
+            logger.warning(f"Cannot use auto file detection:"
+                           f"No files found in {self.dir_path}")
+        return None
 
     def detect_version(self, path, version_type):
         if version_type not in [":last", ":first"]:
@@ -79,7 +90,11 @@ class DataPath(Path):
 
         logger.debug(f"ordered versions: {versions}")
         if not versions:
-            logger.warning(f"No versioned directories found in {path}")
+            warnings.warn(
+                f"No versioned directories found in {path}"
+                f"If you don't intend to use version, set version=None",
+                category=UserWarning,
+            )
 
         if version_type == ":last":
             return versions[-1] if versions else None
@@ -149,7 +164,7 @@ class DataPath(Path):
         return os.path.join(self.dir_path, "metadata.json")
 
     @classmethod
-    def from_input_params(cls, root, attrs, step, version, file_name):
+    def from_input_params(cls, root, attrs, step, version, file_name, glob=False):
         # if step is True:
         #     # extract step from path
         #     step = retrieve_from_path(path, STEP_PREFIX)
@@ -169,6 +184,7 @@ class DataPath(Path):
             step_name=step,
             version=version,
             file_name=file_name,
+            glob=glob,
         )
 
 

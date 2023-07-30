@@ -8,6 +8,8 @@ import uuid
 import warnings
 from datetime import datetime
 
+from stdflow.stdflow_utils.execution import run_notebook, run_python_file, run_function
+
 from stdflow.stdflow_utils.caller_metadata import (
     get_caller_metadata,
     get_calling_package__,
@@ -28,7 +30,7 @@ from stdflow.config import DEFAULT_DATE_VERSION_FORMAT, INFER
 from stdflow.metadata import MetaData, get_file, get_file_md
 from stdflow.stdflow_path import DataPath
 from stdflow.stdflow_types.strftime_type import Strftime
-from stdflow.stdflow_utils import get_arg_value, to_html
+from stdflow.stdflow_utils import get_arg_value, export_viz_html
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -62,7 +64,7 @@ savers = dict(
 
 
 class GStep:
-    """For when Step is used at package level"""
+    """Singleton Step used at package level"""
 
     _instance = None
 
@@ -73,6 +75,13 @@ class GStep:
 
 
 class Step(ModuleType):
+    """
+    environment variables set by stdflow:
+    stdflow__run: if set, the step is executed from a pipeline run
+    stdflow__run__file_path: name of the file executed
+    stdflow__run__function_name: name of the function executed
+    stdflow__vars: variables used to run the function
+    """
     def __init__(
         self,
         step_in: str | None = None,
@@ -93,11 +102,15 @@ class Step(ModuleType):
         attrs: str | list[str] | None = None,
         file_name: str | None = ":auto",
 
+        # to create use the step as part of a pipeline
+        exec_file_path: str | None = None,
+        exec_function_name: str | None = None,
+        exec_variables: dict[str, Any] | None = None,
+
         data_l: list[MetaData] = None,
         data_l_in: list[MetaData] = None,
-
     ):
-        super().__init__("Step")
+        super().__init__("stdflow_step")
 
         # === Exported === #
         # all inputs to this step
@@ -125,6 +138,63 @@ class Step(ModuleType):
         self._file_name = file_name
         self._attrs = attrs
 
+        # Used to execute the step from a pipeline
+        self._exec_file_path = exec_file_path
+        self._exec_function_name = exec_function_name
+        self._exec_env_vars = exec_variables or {}
+
+        # Used when actually using the step to save the variables set
+        self._var_set = {}
+
+    def run(self):
+        """
+        Run the function of the pipeline
+        :return:
+        """
+        if not self._exec_file_path:
+            raise ValueError("exec_file_path is None. Cannot run step.")
+        if os.environ.get("stdflow__run", None) is not None:
+            logger.debug("Step executed from a pipeline run")
+            if os.environ.get("stdflow__run__file_path", None) == self._exec_file_path:
+                warnings.warn(
+                    f"Step executed from the current file. Ignoring the step run."
+                    f"It is ok to do that to test the current step."
+                    f"Step.run() is to be used to run steps from other files.",
+                    category=UserWarning,
+                )
+                return "run ignored"
+        extension = os.path.splitext(self._exec_file_path)[1]
+
+        env_run = {}
+
+        for env_var, value in self._exec_env_vars.items():
+            env_run[f"stdflow__vars__{env_var}"] = str(value)
+
+        env_run["stdflow__run"] = "True"
+        env_run["stdflow__run__file_path"] = self._exec_file_path
+        if self._exec_function_name:
+            env_run["stdflow__run__function_name"] = self._exec_function_name
+
+        if extension == ".ipynb" and not self._exec_function_name:
+            run_notebook(path=self._exec_file_path, env_vars=env_run)
+        elif extension == ".ipynb" and self._exec_function_name:
+            raise NotImplementedError("run python function in notebooks not implemented yet")
+        elif extension == ".py" and not self._exec_function_name:
+            run_python_file(path=self._exec_file_path, env_vars=env_run)
+        elif extension == ".py" and self._exec_function_name:
+            run_function(self._exec_file_path, self._exec_function_name, env_vars=env_run)
+        else:
+            raise ValueError(f"extension {extension} not supported")
+
+    def var(self, key, value, force=False):
+        is_run = os.environ.get("stdflow__run", None) is not None
+        env_var = os.environ.get(f"stdflow__vars__{key}", None)
+        if is_run and env_var is not None and not force:
+            logger.debug(f"using {key} from environment variable")
+            return env_var
+        self._var_set[key] = value
+        return value
+
     def load(
         self,
         *,
@@ -135,6 +205,7 @@ class Step(ModuleType):
         file_name: str | Literal[":default", ":auto"] = ":default",
         method: str | object | Literal[":default", ":auto"] = ":default",
         descriptions: bool = False,
+        file_glob: bool = False,
         verbose: bool = False,
         **kwargs,
     ) -> Tuple[Any, dict] | Any:
@@ -146,6 +217,7 @@ class Step(ModuleType):
             Method must use path as the first argument
         :param attrs: path from data folder to file. (optionally include step and version)
         :param step: input step name
+        :param file_glob: use glob to infer file name
         :param version: input version name. one of [":last", ":first", "<version_name>", None]
         :param descriptions: whether to return the description of the file. `df, desc = sf.load(..., descriptions=True)`
         :param kwargs: kwargs to send to the method
@@ -176,8 +248,10 @@ class Step(ModuleType):
         version = get_arg_value(version, self._version_in)
         method = get_arg_value(method, self._method_in)
 
-        path = DataPath.from_input_params(root, attrs, step, version, file_name)
+        path = DataPath.from_input_params(root, attrs, step, version, file_name, glob=file_glob)
         logger.debug(f"Loading data from {path.full_path}")
+        if not path.file_name:
+            raise ValueError(f"file_name is None. path: {path}")
 
         if method == ":auto":
             method = path.extension
@@ -235,7 +309,7 @@ class Step(ModuleType):
         file_name: str | Literal[":default", ":auto"] = ":default",
         method: str | object | Literal[":default", ":auto"] = ":default",
         descriptions: dict[str | str] | None = None,
-        html_export: bool = ":default",
+        export_viz_tool: bool = ":default",
         verbose: bool = False,
         **kwargs,
     ):
@@ -249,7 +323,7 @@ class Step(ModuleType):
         :param version: last part of the full_path. one of [strftime str, "<version_name>", None]
         :param file_name: file name
         :param descriptions: columns description of the dataset to save
-        :param html_export: if True, export html view of the data and the pipeline it comes from
+        :param export_viz_tool: if True, export html view of the data and the pipeline it comes from
         :param verbose:
         :param kwargs: kwargs to send to the method
         :return:
@@ -265,7 +339,25 @@ class Step(ModuleType):
         if Strftime.__call__(version):
             version = datetime.now().strftime(version)
 
+        if file == ":auto":
+            # Use the same file name as the one use to create it
+            # Should be only file in self.data_l_in. take its file name
+            if len(self.data_l_in) == 1:
+                file = self.data_l_in[0].path.file_name
+            elif len(self.data_l_in) > 1:
+                raise ValueError(
+                    f":auto takes the file name of the data source used to create the file."
+                    f"Multiple data sources detected: {self.data_l_in}"
+                    f"Use file_name argument to specify the file name."
+                )
+            else:
+                raise ValueError(
+                    f":auto takes the file name of the data source used to create the file."
+                    f"No data source detected. Use file_name argument to specify the file name."
+                )
         path = DataPath.from_input_params(root, attrs, step, version, file)
+        if not path.file_name:
+            raise ValueError(f"file_name is None. path: {path}")
 
         # if the directory does not exist, create it recursively
         if not os.path.exists(path.dir_path):
@@ -284,9 +376,10 @@ class Step(ModuleType):
         self.data_l.append(
             MetaData.from_data(path, data, method.__str__(), self.data_l_in, descriptions)
         )
+        # export metadata file
         self._to_file(path)
-        if html_export:
-            to_html(path.metadata_path, path.dir_path)
+        if export_viz_tool:
+            export_viz_html(path.metadata_path, path.dir_path)
 
     def reset(self):  # TODO
         # === Exported === #

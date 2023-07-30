@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import warnings
 
 from stdflow.stdflow_path import Path
 
@@ -64,7 +65,11 @@ class ProcessPath(Path):
 
         logger.debug(f"ordered versions: {versions}")
         if not versions:
-            logger.warning(f"No versioned directories found in {path}")
+            warnings.warn(
+                f"No versioned directories found in {path}"
+                f"If you don't intend to use version, set version=None",
+                category=UserWarning,
+            )
 
         if version_type == ":last":
             return versions[-1] if versions else None

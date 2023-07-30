@@ -35,7 +35,7 @@ def list_files_regex(directory, pattern):
 
 
 # using glob
-def list_files_ext(directory, pattern):
+def list_files_glob(directory, pattern):
     import glob
 
     paths = glob.glob(os.path.join(directory, pattern))
@@ -43,14 +43,14 @@ def list_files_ext(directory, pattern):
 
 
 def list_excel_files(directory):
-    return list_files_ext(directory, "*.xlsx") + list_files_ext(directory, "*.xls")
+    return list_files_glob(directory, "*.xlsx") + list_files_glob(directory, "*.xls")
 
 
 def list_csv_files(directory):
-    return list_files_ext(directory, "*.csv")
+    return list_files_glob(directory, "*.csv")
 
 
 if __name__ == "__main__":
     print(list_files_regex_all_depth(directory="./src", pattern=".*\.py$"))
     print(list_files_regex(directory="./src/data_analysis", pattern=".*\.py"))
-    print(list_files_ext(directory="./src/data_analysis", pattern="*.py"))
+    print(list_files_glob(directory="./src/data_analysis", pattern="*.py"))
