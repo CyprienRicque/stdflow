@@ -18,7 +18,7 @@ from stdflow.stdflow_utils import detect_folders, fstep, fv, remove_dir, retriev
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.WARNING)
 
 
 class DataPath(Path):
@@ -124,7 +124,7 @@ class DataPath(Path):
         )
 
     @property
-    def dir_path(self):
+    def dir_path(self) -> str:
         return Path._create_path(
             self.root,
             self.attrs,

@@ -17,7 +17,7 @@ from stdflow.stdflow_utils import detect_folders, fstep, fv, remove_dir, retriev
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.WARNING)
 
 
 # Maybe more elements need to go to Path but for now it's ok to have everything in this class to iterate fast
@@ -100,6 +100,7 @@ class ProcessPath(Path):
 
     @property
     def dir_path(self):
+        assert isinstance(self.root, str)
         return Path._create_path(
             self.root,
             self.attrs,

@@ -63,7 +63,7 @@ def run_notebook(path, env_vars=None, **kwargs):
     print("Notebook executed successfully.")
 
 
-def run_function(path, function_name, env_vars=None):
+def run_function(path, function_name, env_vars=None, **kwargs):
     # Set environment variables
     if env_vars is not None:
         os.environ.update(env_vars)
@@ -86,7 +86,7 @@ def run_function(path, function_name, env_vars=None):
     print("Function executed successfully.")
 
 
-def run_python_file(path, env_vars=None):
+def run_python_file(path, env_vars=None, **kwargs):
     # Set environment variables
     if env_vars is not None:
         os.environ.update(env_vars)

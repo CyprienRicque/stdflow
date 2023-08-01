@@ -13,7 +13,7 @@ from stdflow.stdflow_utils import get_creation_time, string_to_uuid
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.WARNING)
 
 
 class MetaData:

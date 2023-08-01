@@ -10,7 +10,7 @@ except ImportError:
 
 import pandas as pd
 
-__version__ = "0.0.27"
+__version__ = "0.0.31"
 
 import logging
 import sys
@@ -200,7 +200,7 @@ class Module(object):
         file_name: str | Literal[":default", ":auto"] = ":default",
         method: str | object | Literal[":default", ":auto"] = ":default",
         descriptions: dict[str | str] | None = None,
-        export_viz_tool: bool = ":default",
+        export_viz_tool: bool = False,
         verbose: bool = False,
         **kwargs,
     ):
@@ -423,7 +423,7 @@ def save(
     file_name: str | Literal[":default", ":auto"] = ":default",
     method: str | object | Literal[":default", ":auto"] = ":default",
     descriptions: dict[str | str] | None = None,
-    export_viz_tool: bool = ":default",
+    export_viz_tool: bool = False,
     verbose: bool = False,
     **kwargs,
 ):

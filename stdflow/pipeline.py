@@ -5,7 +5,7 @@ from stdflow.step import Step
 
 class Pipeline:
     def __init__(self, steps: List[Step] = None):
-        self.steps = steps or []
+        self.steps: List[Step] = steps or []
 
     def verify(self):
         is_valid = True
@@ -16,9 +16,12 @@ class Pipeline:
         self.steps.append(step)
         return self
 
-    def run(self):
+    def run(self, **kwargs):
         for step in self.steps:
-            step.run()
+            print(f"Running step {step._exec_file_path}")  # FIXME
+            print(f"Running with vars {step._exec_env_vars}")
+            step.run(**kwargs)
+            print(f"Step {step._exec_file_path} finished")
 
     def __call__(self):
         self.run()

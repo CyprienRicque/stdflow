@@ -15,7 +15,7 @@ from stdflow.stdflow_utils import detect_folders, fstep, fv, remove_dir, retriev
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.WARNING)
 
 
 class Path(ABC):
@@ -29,8 +29,8 @@ class Path(ABC):
         :param root: first part of the full_path
         :param file_name: file name (optional)
         """
-        self.root = root
-        self.file_name = file_name
+        self.root: str = root
+        self.file_name: str = file_name
 
     @property
     def file_name_no_ext(self):
@@ -52,7 +52,7 @@ class Path(ABC):
         ...
 
     @staticmethod
-    def _create_path(*args):
+    def _create_path(*args) -> str:
         return os.path.join(*[arg or "" for arg in args])
 
     @property

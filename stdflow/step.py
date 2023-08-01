@@ -34,7 +34,7 @@ from stdflow.stdflow_utils import get_arg_value, export_viz_html
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.WARNING)
 
 loaders = dict(
     csv=pd.read_csv,
@@ -146,7 +146,7 @@ class Step(ModuleType):
         # Used when actually using the step to save the variables set
         self._var_set = {}
 
-    def run(self):
+    def run(self, **kwargs):
         """
         Run the function of the pipeline
         :return:
@@ -176,13 +176,13 @@ class Step(ModuleType):
             env_run["stdflow__run__function_name"] = self._exec_function_name
 
         if extension == ".ipynb" and not self._exec_function_name:
-            run_notebook(path=self._exec_file_path, env_vars=env_run)
+            run_notebook(path=self._exec_file_path, env_vars=env_run, **kwargs)
         elif extension == ".ipynb" and self._exec_function_name:
             raise NotImplementedError("run python function in notebooks not implemented yet")
         elif extension == ".py" and not self._exec_function_name:
-            run_python_file(path=self._exec_file_path, env_vars=env_run)
+            run_python_file(path=self._exec_file_path, env_vars=env_run, **kwargs)
         elif extension == ".py" and self._exec_function_name:
-            run_function(self._exec_file_path, self._exec_function_name, env_vars=env_run)
+            run_function(self._exec_file_path, self._exec_function_name, env_vars=env_run, **kwargs)
         else:
             raise ValueError(f"extension {extension} not supported")
 
@@ -223,10 +223,12 @@ class Step(ModuleType):
         :param kwargs: kwargs to send to the method
         :return:
         """
+        original_logger_level = logger.level
         if verbose:
             logger.setLevel(logging.INFO)
         else:
             logger.setLevel(logging.WARNING)
+
         caller_file_name, caller_function, caller_package = get_caller_metadata()
         if "ipykernel" in caller_file_name:
             notebook_path, notebook_name = get_notebook_path()
@@ -249,7 +251,7 @@ class Step(ModuleType):
         method = get_arg_value(method, self._method_in)
 
         path = DataPath.from_input_params(root, attrs, step, version, file_name, glob=file_glob)
-        logger.debug(f"Loading data from {path.full_path}")
+        logger.info(f"Loading data from {path.full_path}")
         if not path.file_name:
             raise ValueError(f"file_name is None. path: {path}")
 
@@ -294,6 +296,7 @@ class Step(ModuleType):
         if file_md not in [f for f in self.data_l_in]:  # file already added: same uuid
             self.data_l_in.append(file_md)
 
+        logger.setLevel(original_logger_level)
         if descriptions:
             return data, file_md.descriptions
         return data
@@ -309,7 +312,7 @@ class Step(ModuleType):
         file_name: str | Literal[":default", ":auto"] = ":default",
         method: str | object | Literal[":default", ":auto"] = ":default",
         descriptions: dict[str | str] | None = None,
-        export_viz_tool: bool = ":default",
+        export_viz_tool: bool = False,
         verbose: bool = False,
         **kwargs,
     ):
@@ -328,6 +331,12 @@ class Step(ModuleType):
         :param kwargs: kwargs to send to the method
         :return:
         """
+        original_logger_level = logger.level
+        if verbose:
+            logger.setLevel(logging.INFO)
+        else:
+            logger.setLevel(logging.WARNING)
+
         # if arguments are None, use step level arguments
         root = get_arg_value(get_arg_value(root, self._root_out), self._root)
         attrs = get_arg_value(get_arg_value(attrs, self._attrs_out), self._attrs)
@@ -371,6 +380,7 @@ class Step(ModuleType):
             method = savers[method]
 
         # Save data
+        logger.info(f"Saving data to {path.full_path}")
         method(data, path.full_path, **kwargs)
 
         self.data_l.append(
@@ -380,6 +390,8 @@ class Step(ModuleType):
         self._to_file(path)
         if export_viz_tool:
             export_viz_html(path.metadata_path, path.dir_path)
+            logger.info(f"Exported viz tool to {path.dir_path}")
+        logger.setLevel(original_logger_level)
 
     def reset(self):  # TODO
         # === Exported === #
