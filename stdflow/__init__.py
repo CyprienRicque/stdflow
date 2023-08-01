@@ -10,7 +10,7 @@ except ImportError:
 
 import pandas as pd
 
-__version__ = "0.0.31"
+__version__ = "0.0.32"
 
 import logging
 import sys
