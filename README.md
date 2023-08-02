@@ -234,3 +234,6 @@ TODO: setup the situation in which you chain small function in a directory and i
   before creating a new one with another name. in the chain it will appear with different names showing the process
 TODO: a processing step can delete the loaded files.
 TODO: setting export=False ? delete_after_n_usage=4 ? 
+
+
+
