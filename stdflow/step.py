@@ -387,10 +387,11 @@ class Step(ModuleType):
             MetaData.from_data(path, data, method.__str__(), self.data_l_in, descriptions)
         )
         # export metadata file
+        logger.info(f"Saving metadata to {path.dir_path}")
         self._to_file(path)
         if export_viz_tool:
+            logger.info(f"Exporting viz tool to {path.dir_path}")
             export_viz_html(path.metadata_path, path.dir_path)
-            logger.info(f"Exported viz tool to {path.dir_path}")
         logger.setLevel(original_logger_level)
 
     def reset(self):  # TODO

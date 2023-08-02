@@ -1,6 +1,11 @@
+import logging
 from typing import List
 
 from stdflow.step import Step
+
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARNING)
 
 
 class Pipeline:
@@ -12,16 +17,20 @@ class Pipeline:
         for step in self.steps:
             is_valid = is_valid and step.verify()
 
-    def add_step(self, step: Step):
+    def add_step(self, step: Step = None, **kwargs):
+        if step is None:
+            step = Step(**kwargs)
         self.steps.append(step)
         return self
 
     def run(self, **kwargs):
+        logger.setLevel(logging.INFO)
         for step in self.steps:
-            print(f"Running step {step._exec_file_path}")  # FIXME
-            print(f"Running with vars {step._exec_env_vars}")
+            logger.info(f"START\t\t\t{step._exec_file_path}")
+            logger.info(f"Variables: {step._exec_env_vars}")
             step.run(**kwargs)
-            print(f"Step {step._exec_file_path} finished")
+            logger.info(f"END\t\t\t{step._exec_file_path}")
+        logger.setLevel(logging.WARNING)
 
     def __call__(self):
         self.run()
@@ -40,6 +49,12 @@ class Pipeline:
 
     def __repr__(self):
         return str(self)
+
+
+if __name__ == "__main__":
+    ppl = Pipeline()
+    ppl.add_step(exec_file_path="./demo/experiment_ntb.ipynb", exec_variables={"hello": "coucou"})
+    ppl.run()
 
 
 if __name__ == "__main__":
