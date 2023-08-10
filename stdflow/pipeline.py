@@ -1,6 +1,11 @@
+from __future__ import annotations
+from colorama import Fore, Style
+
+from tqdm.notebook import tqdm
 import logging
 from typing import List
 
+from stdflow import StepRunner
 from stdflow.step import Step
 
 logging.basicConfig()
@@ -9,42 +14,74 @@ logger.setLevel(logging.WARNING)
 
 
 class Pipeline:
-    def __init__(self, steps: List[Step] = None):
-        self.steps: List[Step] = steps or []
+    def __init__(self, steps: List[StepRunner] | StepRunner = None, *args):
+        steps = [steps] if isinstance(steps, StepRunner) else steps or []
+        steps += list(args) if args else []
+        self.steps: List[StepRunner] = steps or []
 
     def verify(self):
         is_valid = True
         for step in self.steps:
-            is_valid = is_valid and step.verify()
+            is_valid = is_valid and step.is_valid()
 
-    def add_step(self, step: Step = None, **kwargs):
-        if step is None:
-            step = Step(**kwargs)
+    def add_step(self, step: StepRunner | str = None, **kwargs):
+        if isinstance(step, str):
+            kwargs["file_path"] = step
+            step = StepRunner(**kwargs)
         self.steps.append(step)
         return self
 
-    def run(self, **kwargs):
-        logger.setLevel(logging.INFO)
-        for step in self.steps:
-            logger.info(f"START\t\t\t{step._exec_file_path}")
-            logger.info(f"Variables: {step._exec_env_vars}")
+    def run(self, progress_bar: bool = False, **kwargs):
+        longest_worker_path_adjusted = max([len(step.worker_path_adjusted) for step in self.steps])
+        min_blank = 10
+
+        it = enumerate(self.steps)
+        if progress_bar:
+            try:
+                it = tqdm(enumerate(self.steps), desc="Pipeline")
+            except ImportError as e:
+                logger.warning(f"Could not use tqdm. {e.msg}")
+                progress_bar = False
+
+        for i, step in it:
+            if progress_bar:
+                it.desc = f"Pipeline: {step.worker_path_adjusted}"
+
+            text = step.worker_path_adjusted
+            end = " " * 4
+            start = f"    {i+1:02}."
+            separator_line_len = max(longest_worker_path_adjusted + len(start) + min_blank + len(end), 25)
+            separator_line = Style.BRIGHT + "=" * separator_line_len + Style.RESET_ALL
+            blank = separator_line_len - len(start) - len(text) - len(end)
+
+            print(separator_line)
+            print(Style.BRIGHT + f"{start}{blank * ' '}" + f"{text}" + Style.RESET_ALL)
+            print(separator_line + Style.RESET_ALL)
+
+            print(f"Variables: {step.env_vars}")
+            # Run step
             step.run(**kwargs)
-            logger.info(f"END\t\t\t{step._exec_file_path}")
-        logger.setLevel(logging.WARNING)
+
+            print("", end="\n\n")
 
     def __call__(self):
         self.run()
 
     def __str__(self):
-        s = f"""==== PIPELINE ====\n\n"""
+        s = Style.BRIGHT + """
+================================
+            PIPELINE            
+================================
+
+""" + Style.RESET_ALL
 
         for i, step in enumerate(self.steps):
-            s += f"""STEP {i}
-\tpath: {step._exec_file_path}
-\tvars: {step._exec_env_vars}
+            s += f"""{Style.BRIGHT}STEP {i+1}{Style.RESET_ALL}
+\tpath: {step.worker_path_adjusted}
+\tvars: {step.env_vars}
 
 """
-        s += f"""== END PIPELINE ==\n"""
+        s += f"""{Style.BRIGHT}================================{Style.RESET_ALL}\n"""
         return s
 
     def __repr__(self):
@@ -91,5 +128,5 @@ if __name__ == "__main__":
             env = {"country": country}
             if target:
                 env["target"] = target
-            ppl.add_step(Step(exec_file_path=file, exec_variables=env))
+            ppl.add_step(StepRunner(exec_file_path=file, exec_variables=env))
     print(ppl)

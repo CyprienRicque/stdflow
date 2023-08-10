@@ -32,7 +32,7 @@ def get_cwd():
 
 def get_cwd2():
     import os
-    cwd = os.getcwd()  # This fn will return the Current Working Directory
+    cwd = os.getcwd()
     return cwd
 
 
@@ -44,8 +44,11 @@ def get_python_file_full_path_2(f=__file__):
 def get_call_python_file_name():
     import inspect
     stack = inspect.stack()
-    calling_context = next(context for context in stack if context.filename != __file__)
-    return calling_context.filename
+    try:
+        calling_context = next(context for context in stack if context.filename != __file__)
+        return calling_context.filename
+    except StopIteration:
+        return None
 
 
 def get_call_python_function_name():

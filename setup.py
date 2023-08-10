@@ -26,7 +26,9 @@ setup(
         "openpyxl~=3.1.2",
         "python-box[all]~=7.0",
         "ipynbname",
-        "nbconvert"
+        "nbconvert",
+        "colorama",
+        "tqdm",
     ],
     keywords=["data science", "data", "flow", "data flow"],
     zip_safe=False,

@@ -75,11 +75,12 @@ class DataPath(Path):
             logger.debug(f"Using file {files[0]}")
             return files[0]
         elif len(files):
-            logger.warning(f"Cannot use auto file detection:"
-                           f"Multiple files found in {self.dir_path}: {files}")
+            logger.warning(
+                f"Cannot use auto file detection:"
+                f"Multiple files found in {self.dir_path}: {files}"
+            )
         else:
-            logger.warning(f"Cannot use auto file detection:"
-                           f"No files found in {self.dir_path}")
+            logger.warning(f"Cannot use auto file detection:" f"No files found in {self.dir_path}")
         return None
 
     def detect_version(self, path, version_type):

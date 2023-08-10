@@ -6,3 +6,5 @@ ipykernel~=6.16.2
 # todo add ipykernel to requirements
 nbconvert~=7.6.0
 # todo add nbconvert to requirements
+colorama
+tqdm

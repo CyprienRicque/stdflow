@@ -8,6 +8,7 @@ import uuid
 import warnings
 from datetime import datetime
 
+from environ_manager import FlowEnv
 from stdflow.stdflow_utils.execution import run_notebook, run_python_file, run_function
 
 from stdflow.stdflow_utils.caller_metadata import (
@@ -30,7 +31,7 @@ from stdflow.config import DEFAULT_DATE_VERSION_FORMAT, INFER
 from stdflow.metadata import MetaData, get_file, get_file_md
 from stdflow.stdflow_path import DataPath
 from stdflow.stdflow_types.strftime_type import Strftime
-from stdflow.stdflow_utils import get_arg_value, export_viz_html
+from stdflow.stdflow_utils import get_arg_value, export_viz_html, string_to_uuid
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -75,13 +76,6 @@ class GStep:
 
 
 class Step(ModuleType):
-    """
-    environment variables set by stdflow:
-    stdflow__run: if set, the step is executed from a pipeline run
-    stdflow__run__file_path: name of the file executed
-    stdflow__run__function_name: name of the function executed
-    stdflow__vars: variables used to run the function
-    """
     def __init__(
         self,
         step_in: str | None = None,
@@ -102,15 +96,12 @@ class Step(ModuleType):
         attrs: str | list[str] | None = None,
         file_name: str | None = ":auto",
 
-        # to create use the step as part of a pipeline
-        exec_file_path: str | None = None,
-        exec_function_name: str | None = None,
-        exec_variables: dict[str, Any] | None = None,
-
         data_l: list[MetaData] = None,
         data_l_in: list[MetaData] = None,
     ):
         super().__init__("stdflow_step")
+
+        self.env = FlowEnv()
 
         # === Exported === #
         # all inputs to this step
@@ -138,58 +129,13 @@ class Step(ModuleType):
         self._file_name = file_name
         self._attrs = attrs
 
-        # Used to execute the step from a pipeline
-        self._exec_file_path = exec_file_path
-        self._exec_function_name = exec_function_name
-        self._exec_env_vars = exec_variables or {}
-
         # Used when actually using the step to save the variables set
         self._var_set = {}
 
-    def run(self, **kwargs):
-        """
-        Run the function of the pipeline
-        :return:
-        """
-        if not self._exec_file_path:
-            raise ValueError("exec_file_path is None. Cannot run step.")
-        if os.environ.get("stdflow__run", None) is not None:
-            logger.debug("Step executed from a pipeline run")
-            if os.environ.get("stdflow__run__file_path", None) == self._exec_file_path:
-                warnings.warn(
-                    f"Step executed from the current file. Ignoring the step run."
-                    f"It is ok to do that to test the current step."
-                    f"Step.run() is to be used to run steps from other files.",
-                    category=UserWarning,
-                )
-                return "run ignored"
-        extension = os.path.splitext(self._exec_file_path)[1]
-
-        env_run = {}
-
-        for env_var, value in self._exec_env_vars.items():
-            env_run[f"stdflow__vars__{env_var}"] = str(value)
-
-        env_run["stdflow__run"] = "True"
-        env_run["stdflow__run__file_path"] = self._exec_file_path
-        if self._exec_function_name:
-            env_run["stdflow__run__function_name"] = self._exec_function_name
-
-        if extension == ".ipynb" and not self._exec_function_name:
-            run_notebook(path=self._exec_file_path, env_vars=env_run, **kwargs)
-        elif extension == ".ipynb" and self._exec_function_name:
-            raise NotImplementedError("run python function in notebooks not implemented yet")
-        elif extension == ".py" and not self._exec_function_name:
-            run_python_file(path=self._exec_file_path, env_vars=env_run, **kwargs)
-        elif extension == ".py" and self._exec_function_name:
-            run_function(self._exec_file_path, self._exec_function_name, env_vars=env_run, **kwargs)
-        else:
-            raise ValueError(f"extension {extension} not supported")
-
     def var(self, key, value, force=False):
-        is_run = os.environ.get("stdflow__run", None) is not None
-        env_var = os.environ.get(f"stdflow__vars__{key}", None)
-        if is_run and env_var is not None and not force:
+        env_var = self.env.var(key)
+
+        if env_var is not None and not force:
             logger.debug(f"using {key} from environment variable")
             return env_var
         self._var_set[key] = value
@@ -229,6 +175,7 @@ class Step(ModuleType):
         else:
             logger.setLevel(logging.WARNING)
 
+        # DEBUG prints
         caller_file_name, caller_function, caller_package = get_caller_metadata()
         if "ipykernel" in caller_file_name:
             notebook_path, notebook_name = get_notebook_path()
@@ -239,8 +186,7 @@ class Step(ModuleType):
             logger.debug(f"Called from function {caller_function} in {caller_file_name}")
 
         logger.debug(f"caller_metadata: {caller_file_name, caller_function, caller_package}")
-        # other = get_calling_package__()
-        # logger.info(f"get_calling_package: {other}")
+        # END DEBUG prints
 
         # if arguments are None, use step level arguments
         root = get_arg_value(get_arg_value(root, self._root_in), self._root)
@@ -250,7 +196,12 @@ class Step(ModuleType):
         version = get_arg_value(version, self._version_in)
         method = get_arg_value(method, self._method_in)
 
-        path = DataPath.from_input_params(root, attrs, step, version, file_name, glob=file_glob)
+        if self.env.running() and root is None:
+            raise ValueError("root is None. Must be set when running from pipeline")
+        if root is not None:
+            root = self.env.get_adjusted_worker_path(root)
+
+        path: DataPath = DataPath.from_input_params(root, attrs, step, version, file_name, glob=file_glob)
         logger.info(f"Loading data from {path.full_path}")
         if not path.file_name:
             raise ValueError(f"file_name is None. path: {path}")
@@ -348,6 +299,11 @@ class Step(ModuleType):
         if Strftime.__call__(version):
             version = datetime.now().strftime(version)
 
+        if self.env.running() and root is None:
+            raise ValueError("root is None. Must be set when running from pipeline")
+        if root is not None:
+            root = self.env.get_adjusted_worker_path(root)
+
         if file == ":auto":
             # Use the same file name as the one use to create it
             # Should be only file in self.data_l_in. take its file name
@@ -364,7 +320,7 @@ class Step(ModuleType):
                     f":auto takes the file name of the data source used to create the file."
                     f"No data source detected. Use file_name argument to specify the file name."
                 )
-        path = DataPath.from_input_params(root, attrs, step, version, file)
+        path: DataPath = DataPath.from_input_params(root, attrs, step, version, file)
         if not path.file_name:
             raise ValueError(f"file_name is None. path: {path}")
 

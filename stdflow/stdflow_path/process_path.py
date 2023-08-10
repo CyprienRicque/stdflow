@@ -163,6 +163,6 @@ class ProcessPath(Path):
         )
 
 
-if __name__ == "__main__":
-    path = DataPath("./data", attrs="fr", step_name="raw", version=":last")
-    assert path.full_path == "./data/fr/step_raw/v_2/", f"src.full_path: {path.full_path}"
+# if __name__ == "__main__":
+#     path = DataPath("./data", attrs="fr", step_name="raw", version=":last")
+#     assert path.full_path == "./data/fr/step_raw/v_2/", f"src.full_path: {path.full_path}"
