@@ -32,7 +32,7 @@ class Pipeline:
         return self
 
     def run(self, progress_bar: bool = False, **kwargs):
-        longest_worker_path_adjusted = max([len(step.worker_path_adjusted) for step in self.steps])
+        longest_worker_path_adjusted = max([len(step.worker_path) for step in self.steps])
         min_blank = 10
 
         it = enumerate(self.steps)
@@ -45,9 +45,9 @@ class Pipeline:
 
         for i, step in it:
             if progress_bar:
-                it.desc = f"Pipeline: {step.worker_path_adjusted}"
+                it.desc = f"Pipeline: {step.worker_path}"
 
-            text = step.worker_path_adjusted
+            text = step.worker_path
             end = " " * 4
             start = f"    {i+1:02}."
             separator_line_len = max(longest_worker_path_adjusted + len(start) + min_blank + len(end), 25)
@@ -77,7 +77,7 @@ class Pipeline:
 
         for i, step in enumerate(self.steps):
             s += f"""{Style.BRIGHT}STEP {i+1}{Style.RESET_ALL}
-\tpath: {step.worker_path_adjusted}
+\tpath: {step.worker_path}
 \tvars: {step.env_vars}
 
 """

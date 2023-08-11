@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="stdflow",
-    version="0.0.34",
+    version="0.0.39",
     description="[alpha] A package that transform your notebooks and python files into pipeline steps by standardizing the data input / output.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",

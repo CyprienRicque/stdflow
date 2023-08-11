@@ -18,6 +18,9 @@ logger.setLevel(logging.INFO)
 def run_notebook(path, env_vars, **kwargs):
     # Set environment variables
     # Load notebook
+    # print("cwd", os.getcwd())
+    # print("exists?", os.path.exists(path))
+
     with open(path) as f:
         nb = nbformat.read(f, as_version=4)
 

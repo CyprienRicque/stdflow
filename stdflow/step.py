@@ -8,8 +8,7 @@ import uuid
 import warnings
 from datetime import datetime
 
-from environ_manager import FlowEnv
-from stdflow.stdflow_utils.execution import run_notebook, run_python_file, run_function
+from stdflow.environ_manager import FlowEnv
 
 from stdflow.stdflow_utils.caller_metadata import (
     get_caller_metadata,
@@ -196,10 +195,10 @@ class Step(ModuleType):
         version = get_arg_value(version, self._version_in)
         method = get_arg_value(method, self._method_in)
 
-        if self.env.running() and root is None:
-            raise ValueError("root is None. Must be set when running from pipeline")
-        if root is not None:
-            root = self.env.get_adjusted_worker_path(root)
+        # if self.env.running() and root is None:
+        #     raise ValueError("root is None. Must be set when running from pipeline")
+        # if root is not None:
+        #     root = self.env.get_adjusted_worker_path(root)
 
         path: DataPath = DataPath.from_input_params(root, attrs, step, version, file_name, glob=file_glob)
         logger.info(f"Loading data from {path.full_path}")
@@ -299,10 +298,10 @@ class Step(ModuleType):
         if Strftime.__call__(version):
             version = datetime.now().strftime(version)
 
-        if self.env.running() and root is None:
-            raise ValueError("root is None. Must be set when running from pipeline")
-        if root is not None:
-            root = self.env.get_adjusted_worker_path(root)
+        # if self.env.running() and root is None:
+        #     raise ValueError("root is None. Must be set when running from pipeline")
+        # if root is not None:
+        #     root = self.env.get_adjusted_worker_path(root)
 
         if file == ":auto":
             # Use the same file name as the one use to create it

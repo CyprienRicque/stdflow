@@ -8,30 +8,15 @@ import uuid
 import warnings
 from datetime import datetime
 
-from environ_manager import FlowEnv
+from stdflow.environ_manager import FlowEnv
 from stdflow.stdflow_utils.execution import run_notebook, run_python_file, run_function
 
-from stdflow.stdflow_utils.caller_metadata import (
-    get_caller_metadata,
-    get_calling_package__,
-    get_notebook_path,
-    get_notebook_name,
-)
 
 try:
     from typing import Any, Literal, Optional, Tuple, Union
 except ImportError:
     from typing_extensions import Literal, Union, Any, Tuple
 
-from types import ModuleType
-
-import pandas as pd
-
-from stdflow.config import DEFAULT_DATE_VERSION_FORMAT, INFER
-from stdflow.metadata import MetaData, get_file, get_file_md
-from stdflow.stdflow_path import DataPath
-from stdflow.stdflow_types.strftime_type import Strftime
-from stdflow.stdflow_utils import get_arg_value, export_viz_html, string_to_uuid
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -52,7 +37,7 @@ class StepRunner:
         self,
         file_path: str,
         *,
-        root: str | None = None,
+        workspace: str | None = None,
         function: str | None = None,
         variables: dict[str, Any] | None = None,
     ):
@@ -60,8 +45,14 @@ class StepRunner:
             raise NotImplementedError("step runner for function not implemented yet")
         self.env = FlowEnv()
 
-        self.worker_path = os.path.join(root, file_path) if root else file_path
-        self.worker_path_adjusted = self.env.get_adjusted_worker_path(self.worker_path)
+        self.workspace = workspace or os.path.dirname(file_path)
+        if len(self.workspace) == 0:
+            self.workspace = "./"
+        # file path is relative to the workspace
+        self.path = os.path.relpath(file_path, self.workspace)
+        self.worker_path = os.path.join(self.workspace, self.path)
+
+        # self.worker_path_adjusted = self.env.get_adjusted_worker_path(self.worker_path)
 
         self.exec_function_name = function
 
@@ -78,19 +69,19 @@ class StepRunner:
         if self.env.running():
             logger.debug("Step executed from a pipeline run")
 
-            if self.env.path == self.worker_path_adjusted:
+            if self.env.path == self.path:
                 warnings.warn(
-                    f"Infinite pipeline loop detected. Not re running the step {self.worker_path_adjusted}",
+                    f"Infinite pipeline loop detected. Not re running the step {self.worker_path}",
                     category=UserWarning,
                 )
                 return "run ignored: infinite loop detected"
 
-        extension = os.path.splitext(self.worker_path_adjusted)[1]
+        extension = os.path.splitext(self.worker_path)[1]
 
-        self.env.start_run(self.worker_path_adjusted, self.env_vars)
+        self.env.start_run(self.workspace, self.path, self.env_vars)
         try:
             if extension == ".ipynb" and not self.exec_function_name:
-                run_notebook(path=self.worker_path_adjusted, env_vars=self.env_vars, **kwargs)
+                run_notebook(path=self.path, env_vars=self.env_vars, **kwargs)
             elif extension == ".ipynb" and self.exec_function_name:
                 raise NotImplementedError("run python function in notebooks not implemented yet")
             elif extension == ".py" and not self.exec_function_name:
@@ -111,15 +102,15 @@ class StepRunner:
         Check if the step is valid
         :return:
         """
-        if not self.worker_path_adjusted:
+        if not self.worker_path:
             logger.warning("file_path is None. Cannot run step.")
             return False
-        if not os.path.exists(self.worker_path_adjusted):
+        if not os.path.exists(self.worker_path):
             # print("adj", self.worker_path_adjusted)
             # print("ori", self.worker_path)
             # print("cwd", os.getcwd())
             logger.warning(
-                f"file_path {self.worker_path_adjusted} does not exist. Cannot run step.\n"
+                f"file_path {self.worker_path} does not exist. Cannot run step.\n"
                 f"Current working directory: {os.getcwd()}"
             )
             return False

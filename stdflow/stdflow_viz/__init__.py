@@ -14,6 +14,8 @@ index_html = """<!DOCTYPE html>
     <div id="mynetwork" style="width: 66%; height: 100%;"></div>
     <div style="width: 34%; height: 100%; display: flex; flex-direction: column;">
         <div class="glass-container" id="control-panel">
+            <input type="file" id="fileInput">
+            <label for="fileInput">Upload File</label>
             <label for="depth" class="control-label">Depth </label>
             <input type="number" id="depth" value="5" min="1" class="control-input">
             <label for="ignoreStep" class="control-label">Ignore Step </label>
@@ -31,7 +33,29 @@ index_html = """<!DOCTYPE html>
 
 
 main_js = """let currentSelectedNode = null;  // Add this line to keep track of selected node
-let filePath = "../metadata.json"
+// let filePath = "../metadata.json"
+
+
+let uploadedData;  // This will store the parsed JSON data from the uploaded file
+
+document.getElementById('fileInput').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function(event) {
+        const content = event.target.result;
+
+        // Parse the content as JSON
+        uploadedData = JSON.parse(content);
+
+        currentSelectedNode = uploadedData.files[0].uuid; // Initialize currentSelectedNode
+        updatePage(uploadedData, currentSelectedNode);
+    };
+
+    reader.readAsText(file);
+});
+
+
 
 function updatePage(jsonData, clickedNodeId) {
     drawGraph(jsonData, clickedNodeId);
@@ -73,7 +97,9 @@ function drawGraph(jsonData, selectedNodeId) {
                 nodesInView.push({
                     id: file.uuid,
                     level: levels[file.uuid] || 0,
-                    label: `${file.file_name}.${file.file_type}\nPath: ${file.step.path}\nStep: ${file.step.step_name || 'N/A'}`,
+                    label: `${file.file_name}.${file.file_type}
+Path: ${file.step.path}
+Step: ${file.step.step_name || 'N/A'}`,
                     data: file,
                     color: file.uuid === selectedNodeId ? 'rgb(243,213,163)' : 'rgb(166,200,222)', // Adding alpha channel to colors
                     borderWidth: 2, // Adding border
@@ -155,22 +181,12 @@ function drawGraph(jsonData, selectedNodeId) {
     });
 }
 
-// Call the drawGraph function initially with no selected node
-fetch(filePath)
-    .then(response => response.json())
-    .then(jsonData => {
-        currentSelectedNode = jsonData.files[0].uuid; // Initialize currentSelectedNode
-        updatePage(jsonData, currentSelectedNode);
-    })
-    .catch(error => console.log('Error:', error));
-
-document.getElementById('updateGraph').addEventListener('click', function () {
-    fetch(filePath)
-        .then(response => response.json())
-        .then(jsonData => {
-            updatePage(jsonData, currentSelectedNode); // Use currentSelectedNode here
-        })
-        .catch(error => console.log('Error:', error));
+document.getElementById('updateGraph').addEventListener('click', function() {
+    if (uploadedData) {
+        updatePage(uploadedData, currentSelectedNode); // Use the uploaded data directly
+    } else {
+        console.log('No uploaded data available');
+    }
 });
 
 let levels = {};
@@ -229,7 +245,6 @@ function show_details(jsonData, clickedNodeId) {
         <p><strong>Export Method Used:</strong> ${clickedNode.export_method_used}</p>
       `;
 }
-
 """
 
 styles_css = """body {
@@ -279,14 +294,51 @@ styles_css = """body {
 }
 
 #updateGraph {
+    display: inline-block;
     padding: 10px 20px;
     background-color: #3498db;
     color: #FFFFFF; /* White */
     border: none;
+    font-size: 14px;
+    width: 150px;
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
+
+
+/* Hide the default file input */
+#fileInput {
+    display: none;
+}
+
+/* Style label to look like a button */
+#fileInput + label {
+    display: inline-block;
+    padding: 10px 10px;
+    width: 120px;
+    font-size: 14px;
+    /*font-weight: bold;*/
+    border: 1.5px solid #757577;
+    /*color: #fff;*/
+    /*background-color: #c8cacc;*/
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-right: 66%;
+    margin-bottom: 10px;
+    text-align: center;
+    margin-top: 5px;
+}
+
+#fileInput + label:hover {
+    background-color: rgba(110, 110, 110, 0.5); /* Darken the color slightly on hover */
+}
+
+#fileInput:active + label {
+    background-color: rgba(248, 248, 248, 0.5); /* Darken the color more on active */
+}
+
 
 #updateGraph:hover {
     background-color: #2980b9;

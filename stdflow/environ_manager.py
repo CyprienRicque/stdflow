@@ -45,6 +45,7 @@ class FlowEnv:  # has to be singleton
     config = "rel"
 
     def __init__(self):
+        self.cwd = None
         FlowEnv.is_valid()
 
     @staticmethod
@@ -104,30 +105,34 @@ class FlowEnv:  # has to be singleton
     def set_vars(self, variables):
         os.environ[f"{prefix}{self.id}__vars"] = json.dumps(variables)
 
-    def start_run(self, path, variables: dict[str, str] | None = None) -> None:
-        self.add_path(path)
-        self.set_vars(variables or {})  # Must be after add_path
-        os.environ[RUN_ENV_KEY] = "True"
-
     def var(self, key) -> str | None:
         json_str = os.environ.get(f"{prefix}{self.id}__vars", None)
         if json_str is None:
             return None
         return json.loads(json_str).get(key, None)
 
+    def remove_vars(self):
+        del os.environ[f"{prefix}{self.id}__vars"]
+
+    # def get_adjusted_worker_path(self, worker_path: str) -> str:
+    #     if not os.path.isabs(worker_path):
+    #         worker_path = os.path.join(self.dir, worker_path)
+    #         worker_path = os.path.normpath(worker_path)
+    #     return worker_path
+
+    def start_run(self, workspace, path, variables: dict[str, str] | None = None) -> None:
+        self.add_path(path)
+        self.set_vars(variables or {})  # Must be after add_path
+        os.environ[RUN_ENV_KEY] = "True"
+        # save current working directory
+        self.cwd = os.getcwd()
+        # change working directory
+        os.chdir(workspace)
+
     def end_run(self) -> None:
         self.remove_vars()  # Must be before remove_last_path
         self.remove_last_path()
         if self.id == -1:
             del os.environ[RUN_ENV_KEY]
-
-    def remove_vars(self):
-        del os.environ[f"{prefix}{self.id}__vars"]
-
-    def get_adjusted_worker_path(self, worker_path: str) -> str:
-        if not os.path.isabs(worker_path):
-            worker_path = os.path.join(self.dir, worker_path)
-            worker_path = os.path.normpath(worker_path)
-        return worker_path
-
-
+        # change working directory back
+        os.chdir(self.cwd)

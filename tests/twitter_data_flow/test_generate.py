@@ -8,8 +8,8 @@ from stdflow import StepRunner, Step
 def test_create_fake_data():
     # Check for France dataset
 
+    print("exists?", os.path.exists("tests/twitter_data_flow/notebooks/load/generate.ipynb"))
     step = StepRunner(
-
         file_path="tests/twitter_data_flow/notebooks/load/generate.ipynb",
         variables={
             "country": "spain",
