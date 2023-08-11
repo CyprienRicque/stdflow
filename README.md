@@ -132,10 +132,12 @@ import stdflow as sf
 sf.save({'what?': "very cool data"}, export_viz_tool=True) # exports viz folder
 ```
 
-The viz folder contains a html page that is going to load the metadata.json file in 
-the parent dir (where you exported) and display the data pipeline.
+This command exports a folder `metadata_viz` in the same folder as the data you exported.
+The metadata to display is saved in the metadata.json file.
 
+In order to display it you need to get both the file and the folder on your local pc (download if you are working on a server)
 
+Then go to the html file in your file explorer and open it. it should open in your browser and lets you upload the metadata.json file.
 
 # Under the hood
 
