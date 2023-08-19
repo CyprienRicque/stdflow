@@ -94,8 +94,8 @@ def test_twice_same_load():
     # Check if the loaded dataframe is equal to the original one
     pd.testing.assert_frame_equal(df, loaded_df)
 
-    assert len(step.data_l) == 1
-    assert len(step.data_l_in) == 1
+    assert len(step.md_all_files) == 1
+    assert len(step.md_direct_input_files) == 1
 
     # Remove the test directory after test
     shutil.rmtree(test_dir)

@@ -10,7 +10,7 @@ except ImportError:
 
 import pandas as pd
 
-__version__ = "0.0.39"
+__version__ = "0.0.40"
 
 import logging
 import sys
@@ -172,7 +172,7 @@ class Module(object):
         version: str | None | Literal[":default", ":last", ":first"] = ":default",
         file_name: str | Literal[":default", ":auto"] = ":default",
         method: str | object | Literal[":default", ":auto"] = ":default",
-        descriptions: bool = False,
+        alias: str = None,
         file_glob: bool = False,
         verbose: bool = False,
         **kwargs,
@@ -184,7 +184,7 @@ class Module(object):
             version=version,
             file_name=file_name,
             method=method,
-            descriptions=descriptions,
+            alias=alias,
             file_glob=file_glob,
             verbose=verbose,
             **kwargs,
@@ -200,7 +200,6 @@ class Module(object):
         version: str | None | Literal[":default"] | Strftime = ":default",
         file_name: str | Literal[":default", ":auto"] = ":default",
         method: str | object | Literal[":default", ":auto"] = ":default",
-        descriptions: dict[str | str] | None = None,
         export_viz_tool: bool = False,
         verbose: bool = False,
         **kwargs,
@@ -213,7 +212,6 @@ class Module(object):
             version=version,
             file_name=file_name,
             method=method,
-            descriptions=descriptions,
             export_viz_tool=export_viz_tool,
             verbose=verbose,
             **kwargs,
@@ -406,7 +404,7 @@ def load(
     version: str | None | Literal[":default", ":last", ":first"] = ":default",
     file_name: str | Literal[":default", ":auto"] = ":default",
     method: str | object | Literal[":default", ":auto"] = ":default",
-    descriptions: bool = False,
+    alias: str = None,
     file_glob: bool = False,
     verbose: bool = False,
     **kwargs,
@@ -423,7 +421,7 @@ def save(
     version: str | None | Literal[":default"] | Strftime = ":default",
     file_name: str | Literal[":default", ":auto"] = ":default",
     method: str | object | Literal[":default", ":auto"] = ":default",
-    descriptions: dict[str | str] | None = None,
+    alias: str = None,
     export_viz_tool: bool = False,
     verbose: bool = False,
     **kwargs,
@@ -437,3 +435,5 @@ def reset():
 
 def var(key, value, force=False):
     ...
+
+

@@ -10,13 +10,14 @@ import pandas as pd
 
 from stdflow.stdflow_path import DataPath
 from stdflow.stdflow_utils import get_creation_time, string_to_uuid
+from stdflow_doc.documenter import Documenter
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
 
-class MetaData:
+class FileMetaData:
     file_name = "metadata.json"
 
     def __init__(
@@ -25,6 +26,7 @@ class MetaData:
         columns: list[dict],
         export_method_used: str,
         input_files: list[dict],
+        col_steps: list[dict] = None,
         uuid_: str = None,
     ):
         # self.uuid = uuid_ or str(uuid.uuid4())
@@ -36,6 +38,7 @@ class MetaData:
         self.columns: list[dict] = columns
         self.export_method_used: str = export_method_used
         self.input_files: list[dict] = input_files
+        self.col_steps: list[dict] = col_steps or []
 
     def __dict__(self):
         return dict(
@@ -46,6 +49,7 @@ class MetaData:
             columns=self.columns,
             export_method_used=self.export_method_used,
             input_files=self.input_files,
+            col_steps=self.col_steps,
         )
 
     @classmethod
@@ -57,6 +61,7 @@ class MetaData:
         return cls(
             path=path,
             columns=d["columns"],
+            col_steps=d["col_steps"],
             export_method_used=d["export_method_used"],
             input_files=d["input_files"],
             uuid_=d["uuid"],
@@ -68,8 +73,7 @@ class MetaData:
         path: DataPath,
         data: pd.DataFrame | dict | Any,
         export_method_used: str = "unknown",
-        input_files: list["MetaData"] = None,
-        descriptions: dict[str, str] = None,
+        input_files: list["FileMetaData"] = None,
     ):
         if input_files is not None:
             input_files = list({"uuid": file.uuid} for file in input_files)
@@ -82,9 +86,6 @@ class MetaData:
                 {
                     "name": c,
                     "type": t.name,
-                    "description": (
-                        descriptions.get(c, None) if isinstance(descriptions, dict) else None
-                    ),
                 }
                 for data in data.values()
                 for c, t in zip(data.columns, data.dtypes)
@@ -94,7 +95,6 @@ class MetaData:
                 {
                     "name": k,
                     "type": type(v).__name__,
-                    "description": (descriptions.get(k, None) if isinstance(descriptions, dict) else None),
                 }
                 for k, v in data.items()
             )
@@ -103,21 +103,18 @@ class MetaData:
                 {
                     "name": c,
                     "type": t.name,
-                    "description": (
-                        descriptions.get(c, None) if isinstance(descriptions, dict) else None
-                    ),
                 }
                 for c, t in zip(data.columns, data.dtypes)
             )
         else:
             logger.warning(f"unknown data type: {type(data)}")
             columns = []
-        return cls(path, columns, export_method_used, input_files or [], uuid_=None)
+        return cls(path, columns, export_method_used, input_files or [], col_steps=None, uuid_=None)
 
     def __eq__(self, other):
         if isinstance(other, DataPath):
             return self.path == other
-        if isinstance(other, MetaData):
+        if isinstance(other, FileMetaData):
             return self.uuid == other.uuid
         raise ValueError(f"other must be of type Path or str, got {type(other)}")
 
@@ -138,13 +135,13 @@ def get_file(files: list[dict], path: DataPath):
             f
             for f in files
             if DataPath.from_dict(f["step"], f["file_name"], f["file_type"]).full_path_from_root
-               == path.full_path_from_root
+            == path.full_path_from_root
         ),
         None,
     )
 
 
-def get_file_md(files: list[MetaData], path: DataPath):
+def get_file_md(files: list[FileMetaData], path: DataPath):
     return next(
         (f for f in files if f.path.full_path_from_root == path.full_path_from_root),
         None,

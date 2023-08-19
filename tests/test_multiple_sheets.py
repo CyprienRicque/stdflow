@@ -46,7 +46,7 @@ def test_load_excel_multiple_sheets(create_excel_file):
             f'Name{i}': [f'Tom{i+1}', f'Nick{i+1}', f'John{i+1}', f'Tom{i+1}', f'John{i+1}']
         }))
 
-    assert [c['name'] for c in step.data_l[0].columns] == ['Name', 'Age', 'Score', 'Name0', "Name", "Age", "Score", "Name1", "Name", "Age", "Score", "Name2"]
+    assert [c['name'] for c in step.md_all_files[0].columns] == ['Name', 'Age', 'Score', 'Name0', "Name", "Age", "Score", "Name1", "Name", "Age", "Score", "Name2"]
 
     # Remove the file after the test
     os.remove(create_excel_file)

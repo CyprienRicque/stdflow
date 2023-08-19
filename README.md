@@ -60,7 +60,7 @@ ppl.run()
 import stdflow as sf
 import pandas as pd
 
-# load data from ./data/raw/france/step_raw/v_1/countries of the world.csv
+# load data from ./data/raw/twitter/france/step_raw/v_1/countries of the world.csv
 df = sf.load(
    root="./data", 
    attrs=['twitter', 'france'], # or attrs='twitter/france'
@@ -70,7 +70,7 @@ df = sf.load(
    method=pd.read_csv  # or method='csv'
 )
 
-# export data to ./data/raw/france/step_processed/v_1/countries.csv
+# export data to ./data/raw/twitter/france/step_processed/v_1/countries.csv
 sf.save(
    df, 
    root="./data", 
@@ -123,7 +123,9 @@ df = step.load(version=':last', file_name=":auto", verbose=True)
 
 step.save(df, verbose=True)
 ```
+## Do not
 
+- Save in the same directory from different steps. Because this will erase metadata from the previous step.
 
 ## Data visualization
 

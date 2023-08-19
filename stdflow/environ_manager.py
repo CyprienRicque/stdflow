@@ -27,7 +27,7 @@ from types import ModuleType
 import pandas as pd
 
 from stdflow.config import DEFAULT_DATE_VERSION_FORMAT, INFER
-from stdflow.metadata import MetaData, get_file, get_file_md
+from stdflow.filemetadata import FileMetaData, get_file, get_file_md
 from stdflow.stdflow_path import DataPath
 from stdflow.stdflow_types.strftime_type import Strftime
 from stdflow.stdflow_utils import get_arg_value, export_viz_html, string_to_uuid

@@ -3,8 +3,6 @@ datetime~=5.2
 python-box[all]~=7.0
 openpyxl~=3.1.2
 ipykernel~=6.16.2
-# todo add ipykernel to requirements
 nbconvert~=7.6.0
-# todo add nbconvert to requirements
 colorama
 tqdm
