@@ -3,10 +3,8 @@ from __future__ import annotations
 import datetime
 import glob
 import os
-import re
-import shutil
 import uuid
-from typing import List, Union
+from typing import Any
 
 from stdflow.config import STEP_PREFIX, VERSION_PREFIX
 from stdflow.stdflow_viz import index_html, main_js, styles_css
@@ -28,20 +26,20 @@ def get_creation_time(file_path) -> None | datetime.datetime:
         return None
 
 
-def get_arg_value(arg, default):
+def get_arg_value(arg, default) -> Any:
     if arg == ":default":
         return default
     return arg
 
 
-def detect_folders(path: str, prefix: str) -> list:
+def detect_folders(path: str, prefix: str) -> list[str]:
     full_path_versions = sorted(glob.glob(os.path.join(path, f"{prefix}*")))
-    suffixes = [os.path.basename(v)[len(prefix) :] for v in full_path_versions if os.path.isdir(v)]
+    suffixes = [os.path.basename(v)[len(prefix):] for v in full_path_versions if os.path.isdir(v)]
     return suffixes
 
 
 def retrieve_from_path(path: str, prefix: str) -> str:
-    version = [part[len(prefix) :] for part in path.split(os.sep) if part.startswith(prefix)]
+    version = [part[len(prefix):] for part in path.split(os.sep) if part.startswith(prefix)]
     return version[-1] if version else None
 
 

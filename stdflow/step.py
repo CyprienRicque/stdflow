@@ -65,6 +65,10 @@ savers = dict(
 )
 
 
+def alias_from_file_metadata(file_metadata: FileMetaData):
+    return file_metadata.uuid
+
+
 def filter_list(lst, starts_with):
     """Remove all strings in a list that do not start with"""
     new_lst = []
@@ -164,7 +168,7 @@ class Step(ModuleType):
         # Used when actually using the step to save the variables set
         self._var_set = {}
 
-        self.documentation = Documenter()
+        self.doc = Documenter()
 
     def var(self, key, value, force=False):
         env_var = self.env.var(key)
@@ -177,10 +181,10 @@ class Step(ModuleType):
 
     def col_step(self, col, col_step, input_cols=None):
         input_cols = input_cols or []
-        self.documentation(col, col_step, input_cols)
+        self.doc(col, col_step, input_cols)
 
     def get_doc(self, col: str, alias: str | None = None, starts_with: str | None = None):
-        col_steps = self.documentation.get_documentation(col, alias)
+        col_steps = self.doc.get_documentation(col, alias)
         if starts_with is None:
             return col_steps
         return filter_list(col_steps, starts_with)
@@ -191,8 +195,8 @@ class Step(ModuleType):
     def get_origins(self, col, alias):
         return nested_replace(flatten(self.get_doc(col, alias, "origin: ")), "origin: ", "")
 
-    def col_origin(self, col, col_origin):
-        self.documentation(col, f"origin: {col_origin}", [col])
+    def col_origin(self, col, col_origin, input_cols=None):
+        self.doc.document(col, f"origin: {col_origin}", input_cols or [col])
 
     def load(
         self,
@@ -278,7 +282,7 @@ class Step(ModuleType):
             previous_step = Step()
             previous_step.md_all_files = [FileMetaData.from_data(path, data)]
             for md in previous_step.md_all_files:
-                previous_step.documentation.set_dataframe(
+                previous_step.doc.set_dataframe(
                     columns=[c["name"] for c in md.columns],
                     col_steps=md.col_steps,
                     alias="tmp",
@@ -320,9 +324,9 @@ class Step(ModuleType):
             self.md_direct_input_files.append(file_md)
 
         # Update documentation
-        alias = alias or file_md.uuid
+        alias = alias or alias_from_file_metadata(file_md)
 
-        self.documentation.set_dataframe(
+        self.doc.set_dataframe(
             columns=[c["name"] for c in file_md.columns],
             col_steps=file_md.col_steps,
             alias=alias,
@@ -422,7 +426,7 @@ class Step(ModuleType):
 
         # update col_steps in metadata from documentation
         if alias is not None:
-            saved_file_md.col_steps = self.documentation.metadata(data, alias)  # FIXME step col should be at file level
+            saved_file_md.col_steps = self.doc.metadata(data, alias)  # FIXME step col should be at file level
 
         # automatic input file detection
         if alias is None:
@@ -432,11 +436,11 @@ class Step(ModuleType):
 
                 # find initial loaded file
                 if len(self.md_direct_input_files) == 1:
-                    alias = self.md_direct_input_files[0].uuid
+                    alias = alias_from_file_metadata(self.md_direct_input_files[0])
                 elif len(input_file) == 1:
-                    alias = input_file[0].uuid
+                    alias = alias_from_file_metadata(input_file[0])
                 elif len(self.md_direct_input_files) == 0:
-                    alias = saved_file_md.uuid
+                    alias = alias_from_file_metadata(saved_file_md)
                 else:
                     raise ValueError(
                         f":auto takes the file name of the data source used to create the file."
@@ -444,7 +448,7 @@ class Step(ModuleType):
                         f"Use file_name argument to specify the file name."
                     )
 
-                saved_file_md.col_steps = self.documentation.metadata(data, alias)
+                saved_file_md.col_steps = self.doc.metadata(data, alias)
             except ValueError:
                 logger.warning("auto saving of columns documentation failed.")
 
@@ -485,6 +489,9 @@ class Step(ModuleType):
         self._root: str | None = "./data"
         self._file_name: str | None = ":auto"  # TODO
         self._attrs: str | list[str] | None = None
+
+        # reset documentation
+        self.doc.reset()
 
     # === Private === #
 

@@ -9,10 +9,6 @@ import json
 from typing import List, Tuple, Optional, Dict
 import logging
 
-from stdflow.stdflow_utils import string_to_uuid
-
-from stdflow_utils.uuid import is_valid_uuid
-
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
@@ -68,7 +64,9 @@ class Documenter:
         self.dict_step: Dict[str, ColStep] = {}
         self._step_list: List[ColStep] = []
 
-    def __call__(self, col, col_step, input_cols: list, current_step=True):
+    def document(self, col, col_step, input_cols: list | str, current_step=True):
+        if isinstance(input_cols, str):
+            input_cols = [input_cols]
         input_cols_with_ids = self._get_input_cols_details(input_cols)
         alias, col = self._get_output_col_details(col, input_cols_with_ids)
 
@@ -78,7 +76,13 @@ class Documenter:
         ]
         # if one of the step is None, raise an error
         if None in input_steps:
-            raise ValueError(f"Column {col} has no documented origin.")
+            raise ValueError(
+                f"Column {col} has no documented origin. This column was in the input cols: {input_cols}."
+                f"You may have specified it or it is the default value"
+                f"If you are trying to document a column that does"
+                f"if the input col is not correct, specify it with input_cols=[df_alias::col_name, ...]"
+            )
+
         input_uuids = [step.id for step in input_steps if step is not None]
 
         step = ColStep(
@@ -89,6 +93,9 @@ class Documenter:
             current_step=current_step,
         )
         self._add_step(step)
+
+    def __call__(self, col, col_step, input_cols: list, current_step=True):
+        self.document(col, col_step, input_cols, current_step)
 
     def _add_step(self, step: ColStep):
         self.dict_step[step.id] = step
@@ -140,7 +147,9 @@ class Documenter:
                 return alias
         raise ValueError(f"Could not infer alias from column '{col}'.")
 
-    def _get_output_col_details(self, col: str, input_cols: list[tuple[str, str]]) -> Tuple[str, str]:
+    def _get_output_col_details(
+        self, col: str, input_cols: list[tuple[str, str]]
+    ) -> Tuple[str, str]:
         # if not alias in out col, infer it from input cols
         if splitter not in col:
             alias: str = input_cols[0][0]
@@ -156,7 +165,10 @@ class Documenter:
                 df_alias, col_name = input_col.split(splitter)
             else:
                 col_name = input_col
-                df_alias = self._infer_dataframe_alias(col_name)
+                df_alias = self._infer_dataframe_alias_from_col_steps(col_name)
+
+            if not isinstance(df_alias, str):
+                raise ValueError(f"Column '{col_name}' is ambiguous. Please specify the dataframe name.")
 
             input_cols_with_ids.append((df_alias, col_name))
         return input_cols_with_ids
@@ -172,15 +184,19 @@ class Documenter:
         # Add missing cols
         missing_cols = [col for col in columns if col not in [step.col for step in steps]]
         if alias == "tmp" and missing_cols:
-            logger.error(f"Columns {missing_cols} do not have origin documentation.")
+            logger.info(f"Columns {missing_cols} do not have origin documentation.")
         for col in missing_cols:
             self(f"{alias}{splitter}{col}", IMPORTED, [])
         # End add missing cols
         if alias not in self.input_df_alias_to_cols:
             self.input_df_alias_to_cols[alias] = columns
         else:
-            if len(set(self.input_df_alias_to_cols[alias] + columns)) != len(self.input_df_alias_to_cols[alias] + columns):
-                duplicated_cols = [col for col in columns if col in self.input_df_alias_to_cols[alias]]
+            if len(set(self.input_df_alias_to_cols[alias] + columns)) != len(
+                self.input_df_alias_to_cols[alias] + columns
+            ):
+                duplicated_cols = [
+                    col for col in columns if col in self.input_df_alias_to_cols[alias]
+                ]
                 logger.warning(f"Columns {duplicated_cols} are duplicated in dataframe {alias}.")
             self.input_df_alias_to_cols[alias] += columns
 
@@ -189,6 +205,28 @@ class Documenter:
             step["current_step"] = False
             step["alias"] = alias
             self._add_step(ColStep.from_dict(step))
+
+    def _infer_dataframe_alias_from_col_steps(self, col_name):
+        """
+        Find the highest steps with col_name and return the alias.
+        :param col_name:
+        :return:
+        """
+        matching_steps = self.highest_matching_cdt(
+            self.step_list,
+            lambda step: step.col == col_name
+            and step.name != DROPPED,
+        )
+
+        if not matching_steps:
+            logger.info(f"alias of column '{col_name}' could not be found")
+            return None
+
+        if len(matching_steps) > 1:
+            logger.error(f"Column '{col_name}' is ambiguous. Found: {matching_steps}")
+            return matching_steps
+
+        return matching_steps[0].alias
 
     def _infer_dataframe_alias(self, col_name):
         matching_df_aliases = [
@@ -217,7 +255,7 @@ class Documenter:
         # End circular dependency check
 
         if col_id not in self.dict_step:
-            logger.warning(f"Warning: Column {col_id} has no documented origin.")
+            logger.info(f"Column {col_id} has no documented origin.")
             return []
         step = self.dict_step[col_id]
 
@@ -261,7 +299,7 @@ class Documenter:
             if len(steps) > 1:
                 raise ValueError(f"Column '{col}' is ambiguous. Found: {steps}")
             if not steps:
-                logger.warning(f"Column '{col}' has no documented origin.")
+                logger.info(f"Column '{col}' has no documented origin.")
             else:
                 all_steps.append(steps[0])
         return all_steps
@@ -326,7 +364,9 @@ class Documenter:
             i for is_ in step.input_cols for i in self.get_origin_from_step(self.dict_step[is_])
         ]
 
-    def find_advanced_col_step(self, col_name, df_alias: None | str, include_dropped=False) -> None | List[ColStep] | ColStep:
+    def find_advanced_col_step(
+        self, col_name, df_alias: None | str, include_dropped=False
+    ) -> None | List[ColStep] | ColStep:
         """
         Return the documented step that generated a column.
         :param col_name:
@@ -334,7 +374,7 @@ class Documenter:
         :param include_dropped: if True, include dropped steps in the documentation
         :return:
         """
-        df_alias = df_alias or self._infer_dataframe_alias(col_name)
+        df_alias = df_alias or self._infer_dataframe_alias_from_col_steps(col_name)
 
         matching_steps = self.highest_matching_cdt(
             self.step_list,
@@ -344,7 +384,7 @@ class Documenter:
         )
 
         if not matching_steps:
-            logger.warning(f"Column '{col_name}' has no documented origin.")
+            logger.info(f"Column '{col_name}' has no documented origin.")
             return None
 
         if len(matching_steps) > 1:
@@ -522,3 +562,8 @@ class Documenter:
     #     ]
     #
     #     return result
+
+    def reset(self):
+        self.input_df_alias_to_cols = {}
+        self.dict_step = {}
+        self._step_list = []

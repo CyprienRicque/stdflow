@@ -206,3 +206,13 @@ The recommended way to use it is:
 - Do not set sub-dirs within the export (i.e. version folder is the last depth). if you need similar operation 
   for different datasets, create pipelines
 
+
+## Tests
+
+tests are run with pytest
+
+/!\ run from project root
+
+```bash
+pytest
+```

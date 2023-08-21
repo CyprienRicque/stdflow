@@ -6,7 +6,7 @@ import shutil
 from stdflow import Step
 import pytest
 
-from stdflow_doc.documenter import DROPPED
+from stdflow.stdflow_doc.documenter import DROPPED
 
 
 def setup():
@@ -37,24 +37,24 @@ def test_basic_documentation():
     step.col_step("basic_data::A", "Loaded from raw data.", ["basic_data::A"])
     step.col_step("basic_data::B", "Loaded from raw data.", ["basic_data::B"])
 
-    assert step.documentation.get_documentation("A", "basic_data") == ["Imported", "Loaded from raw data."]
-    assert step.documentation.get_documentation("B", "basic_data") == ["Imported", "Loaded from raw data."]
+    assert step.doc.get_documentation("A", "basic_data") == ["Imported", "Loaded from raw data."]
+    assert step.doc.get_documentation("B", "basic_data") == ["Imported", "Loaded from raw data."]
 
     df['A+B'] = df['A'] + df['B']
     df['A*B'] = df['A'] * df['B']
 
     step.col_step("basic_data::A+B", "Column A plus column B.", ["basic_data::A", "basic_data::B"])
 
-    assert step.documentation.get_documentation("A", "basic_data") == ["Imported", "Loaded from raw data."]
-    assert step.documentation.get_documentation("B", "basic_data") == ["Imported", "Loaded from raw data."]
-    assert step.documentation.get_documentation("A+B", "basic_data") == [["Imported", "Loaded from raw data."], ["Imported", "Loaded from raw data."], "Column A plus column B."]
+    assert step.doc.get_documentation("A", "basic_data") == ["Imported", "Loaded from raw data."]
+    assert step.doc.get_documentation("B", "basic_data") == ["Imported", "Loaded from raw data."]
+    assert step.doc.get_documentation("A+B", "basic_data") == [["Imported", "Loaded from raw data."], ["Imported", "Loaded from raw data."], "Column A plus column B."]
 
     step.save(
         df,
         file_name="basic_data.csv",
         version=None, alias="basic_data")
 
-    assert step.documentation.get_documentation("A+B", "basic_data") == [["Imported", "Loaded from raw data."], ["Imported", "Loaded from raw data."], "Column A plus column B."]
+    assert step.doc.get_documentation("A+B", "basic_data") == [["Imported", "Loaded from raw data."], ["Imported", "Loaded from raw data."], "Column A plus column B."]
 
 
 def test_drop():
@@ -73,7 +73,7 @@ def test_drop():
     df.drop(columns=['A', "B"], inplace=True)
     step.col_step("A", DROPPED, ["basic_data::A"])
 
-    assert step.documentation.get_documentation("A", "basic_data", include_dropped=True) == ["Imported", "Loaded from raw data.", DROPPED]
+    assert step.doc.get_documentation("A", "basic_data", include_dropped=True) == ["Imported", "Loaded from raw data.", DROPPED]
 
     step.save(
         df,
@@ -83,8 +83,8 @@ def test_drop():
     step = Step(root="./data", attrs=["test"], step_in="processed", step_out="processed_2")
 
     step.load(file_name="basic_data.csv", version=None, alias="basic_data")
-    assert step.documentation.get_documentation("B", "basic_data", include_dropped=True) == ["Imported", "Loaded from raw data.", DROPPED]
-    assert step.documentation.get_documentation("A", "basic_data", include_dropped=True) == ["Imported", "Loaded from raw data.", DROPPED]
+    assert step.doc.get_documentation("B", "basic_data", include_dropped=True) == ["Imported", "Loaded from raw data.", DROPPED]
+    assert step.doc.get_documentation("A", "basic_data", include_dropped=True) == ["Imported", "Loaded from raw data.", DROPPED]
 
 
 def test_load_twice_same_dataset_same_alias():
@@ -107,7 +107,7 @@ def test_load_twice_same_dataset_same_alias():
     step.col_step("basic_data::A", "Doubled column A values again.", ["basic_data::A"])
 
     assert df1["A"].equals(df2["A"])
-    assert step.documentation.get_documentation("A", "basic_data") == [
+    assert step.doc.get_documentation("A", "basic_data") == [
         "Imported",
         "Doubled column A values.",
         "Doubled column A values again.",
@@ -136,11 +136,11 @@ def test_load_twice_same_dataset_diff_alias():
     step.col_step("basic_data_2::A", "Doubled column A values.", ["basic_data_2::A"])
 
     assert df1["A"].equals(df2["A"])
-    assert step.documentation.get_documentation("A", "basic_data_1") == [
+    assert step.doc.get_documentation("A", "basic_data_1") == [
         "Imported",
         "Doubled column A values.",
     ]
-    assert step.documentation.get_documentation("A", "basic_data_2") == [
+    assert step.doc.get_documentation("A", "basic_data_2") == [
         "Imported",
         "Doubled column A values.",
     ]
@@ -152,11 +152,11 @@ def test_load_twice_same_dataset_diff_alias():
     step.load(file_name="basic_data1.csv", alias="basic_data_1")
     step.load(file_name="basic_data2.csv", alias="basic_data_2")
     # documentation check
-    assert step.documentation.get_documentation("A", "basic_data_1") == [
+    assert step.doc.get_documentation("A", "basic_data_1") == [
         "Imported",
         "Doubled column A values.",
     ]
-    assert step.documentation.get_documentation("A", "basic_data_2") == [
+    assert step.doc.get_documentation("A", "basic_data_2") == [
         "Imported",
         "Doubled column A values.",
     ]
@@ -177,6 +177,32 @@ def test_split():
         split2,
         file_name="split2.csv",
         version=None, alias="split2")
+
+
+def test_rename():
+    setup()
+    step = Step(root="./data", attrs=["test"], step_in="raw", step_out="processed")
+    df = step.load(file_name="basic_data.csv", version=None, alias="basic_data")
+
+    df.rename(columns={"A": "A_renamed"}, inplace=True)
+
+    # test assert
+    with pytest.raises(ValueError):
+        step.col_origin("basic_data::A_renamed", "Renamed column A.")
+
+    step.col_origin("A_renamed", "test", input_cols='A')
+    step.col_origin("A_renamed", "test2", ['A_renamed'])
+    step.col_origin("A_renamed", "test3", 'A_renamed')
+    step.col_origin("A_renamed", "test4")
+
+    assert step.get_doc("A_renamed") == ['Imported', 'origin: test', 'origin: test2', 'origin: test3', 'origin: test4']
+
+    step.save(
+        df,
+        file_name="split1.csv",
+        version=None,
+        alias="df"
+    )
 
 
 # if __name__ == "__main__":

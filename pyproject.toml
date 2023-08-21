@@ -7,7 +7,7 @@ py-modules = ["stdflow"]
 
 [project]
 name = "stdflow"
-version = "0.0.40"
+version = "0.0.48"
 description = "[alpha] A package that transform your notebooks and python files into pipeline steps by standardizing the data input / output."
 readme = "README.md"
 authors = [
@@ -48,3 +48,9 @@ profile = "black"
 [tool.black]
 line-length = 100
 target-version = ['py39']
+
+[tool.pytest.ini_options]
+log_cli = false
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"

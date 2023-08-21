@@ -6,7 +6,7 @@ import shutil
 from stdflow import Step
 import pytest
 
-from stdflow_doc.documenter import DROPPED
+from stdflow.stdflow_doc.documenter import DROPPED
 
 
 def setup():
@@ -56,8 +56,6 @@ def test_export_only():
     assert step.get_doc("A") == ["random_origin"]
 
 
-
-
 def test_merge_new_alias():
     setup()
     step = Step(root="./data", attrs=["test"], step_in="raw", step_out="processed")
@@ -80,20 +78,20 @@ def test_merge_new_alias():
         alias="merged_data",
     )
     # check that the documentation for the merged dataset is empty
-    assert step.documentation.get_documentation("A", "merged_data") == []
-    assert step.documentation.get_documentation("B", "merged_data") == []
-    assert step.documentation.get_documentation("C", "merged_data") == []
-    assert step.documentation.get_documentation("D", "merged_data") == []
+    assert step.doc.get_documentation("A", "merged_data") == []
+    assert step.doc.get_documentation("B", "merged_data") == []
+    assert step.doc.get_documentation("C", "merged_data") == []
+    assert step.doc.get_documentation("D", "merged_data") == []
     # save to rely on auto "Created" step
     step.save(merged_df, file_name="merged_data.csv", alias="merged_data")
 
     step = Step(root="./data", attrs=["test"], step_in="processed", step_out="processed_2")
     step.load(file_name="merged_data.csv", alias="merged_data")
     # check that the documentation for the merged dataset has created step
-    assert step.documentation.get_documentation("A", "merged_data") == ["Created"]
-    assert step.documentation.get_documentation("B", "merged_data") == ["Created"]
-    assert step.documentation.get_documentation("C", "merged_data") == ["Created"]
-    assert step.documentation.get_documentation("D", "merged_data") == ["Created"]
+    assert step.doc.get_documentation("A", "merged_data") == ["Created"]
+    assert step.doc.get_documentation("B", "merged_data") == ["Created"]
+    assert step.doc.get_documentation("C", "merged_data") == ["Created"]
+    assert step.doc.get_documentation("D", "merged_data") == ["Created"]
 
 
 
@@ -119,20 +117,20 @@ def test_merge_same_alias_set_documentation():
     step.col_step("data::D", "Merged", ["data::D"])
 
     # check that the documentation for the merged dataset is empty
-    assert step.documentation.get_documentation("A", "data") == ['Imported', "Converted to int", "Merged"]
-    assert step.documentation.get_documentation("B", "data") == ['Imported']
-    assert step.documentation.get_documentation("D", "data") == [['Imported'], ['Imported'], 'Added column A', 'Merged']
-    assert step.documentation.get_documentation("C", "data") == [['Imported'], [['Imported'], ['Imported'], 'Added column A'], 'Added column D', 'Merged']
+    assert step.doc.get_documentation("A", "data") == ['Imported', "Converted to int", "Merged"]
+    assert step.doc.get_documentation("B", "data") == ['Imported']
+    assert step.doc.get_documentation("D", "data") == [['Imported'], ['Imported'], 'Added column A', 'Merged']
+    assert step.doc.get_documentation("C", "data") == [['Imported'], [['Imported'], ['Imported'], 'Added column A'], 'Added column D', 'Merged']
     # save to rely on auto "Created" step
     step.save(merged_df, file_name="data.csv", alias="data")
 
     step = Step(root="./data", attrs=["test"], step_in="processed", step_out="processed_2")
     step.load(file_name="data.csv", alias="data")
     # check that the documentation for the merged dataset has created step
-    assert step.documentation.get_documentation("A", "data") == ['Imported', "Converted to int", "Merged"]
-    assert step.documentation.get_documentation("B", "data") == ['Imported']
-    assert step.documentation.get_documentation("D", "data") == [['Imported'], ['Imported'], 'Added column A', 'Merged']
-    assert step.documentation.get_documentation("C", "data") == [['Imported'], [['Imported'], ['Imported'], 'Added column A'], 'Added column D', 'Merged']
+    assert step.doc.get_documentation("A", "data") == ['Imported', "Converted to int", "Merged"]
+    assert step.doc.get_documentation("B", "data") == ['Imported']
+    assert step.doc.get_documentation("D", "data") == [['Imported'], ['Imported'], 'Added column A', 'Merged']
+    assert step.doc.get_documentation("C", "data") == [['Imported'], [['Imported'], ['Imported'], 'Added column A'], 'Added column D', 'Merged']
 
 
 
@@ -150,10 +148,10 @@ def test_merge_same_alias_same_data():
     df_advanced['A'] = df_advanced['A'].astype(int)
     step.col_step("adv::A", "Converted to int", ["adv::A"])
 
-    assert step.documentation.get_documentation("A", "data") == [['Imported'], ['Imported'], 'Added A to B']
-    assert step.documentation.get_documentation("B", "data") == ['Imported']
-    assert step.documentation.get_documentation("A", "adv") == ['Imported', "Converted to int"]
-    assert step.documentation.get_documentation("B", "adv") == ['Imported']
+    assert step.doc.get_documentation("A", "data") == [['Imported'], ['Imported'], 'Added A to B']
+    assert step.doc.get_documentation("B", "data") == ['Imported']
+    assert step.doc.get_documentation("A", "adv") == ['Imported', "Converted to int"]
+    assert step.doc.get_documentation("B", "adv") == ['Imported']
 
     step.save(df_basic, file_name="data.csv", alias="data", index=False)
     step.save(df_advanced, file_name="adv.csv", alias="adv", index=False)
@@ -183,7 +181,7 @@ def test_ambigous():
     # Here data:A exists once from the original A col and once from the one just created from B and C
 
     with pytest.raises(ValueError):
-        assert step.documentation.get_documentation("A", "data") == [['Imported'], ['Imported'], 'Added A to C']
+        assert step.doc.get_documentation("A", "data") == [['Imported'], ['Imported'], 'Added A to C']
 
 
 def test_auto_propagation():
@@ -198,10 +196,10 @@ def test_auto_propagation():
     df_advanced['D'] = df_advanced['D'].astype(int)
     step.col_step("D", "Converted to int", ["D"])
 
-    assert step.documentation.get_documentation("A", "data") == [['Imported'], ['Imported'], 'Added A to C']
-    assert step.documentation.get_documentation("B", "data") == ['Imported']
-    assert step.documentation.get_documentation("D", "adv") == ['Imported', "Converted to int"]
-    assert step.documentation.get_documentation("C", "adv") == ['Imported']
+    assert step.doc.get_documentation("A", "data") == [['Imported'], ['Imported'], 'Added A to C']
+    assert step.doc.get_documentation("B", "data") == ['Imported']
+    assert step.doc.get_documentation("D", "adv") == ['Imported', "Converted to int"]
+    assert step.doc.get_documentation("C", "adv") == ['Imported']
 
     step.save(df_basic, file_name="data.csv", alias="data", index=False)
     step.save(df_advanced, file_name="adv.csv", alias="adv", index=False)
@@ -223,10 +221,10 @@ def test_auto_propagation():
     df_basic = step.load(file_name="data.csv", alias='data')
     df_advanced = step.load(file_name="adv.csv", alias='adv')
 
-    assert step.documentation.get_documentation("A", "data") == [['Imported'], ['Imported'], 'Added A to C']
-    assert step.documentation.get_documentation("B", "data") == ['Imported']
-    assert step.documentation.get_documentation("D", "adv") == ['Imported', "Converted to int"]
-    assert step.documentation.get_documentation("C", "adv") == ['Imported']
+    assert step.doc.get_documentation("A", "data") == [['Imported'], ['Imported'], 'Added A to C']
+    assert step.doc.get_documentation("B", "data") == ['Imported']
+    assert step.doc.get_documentation("D", "adv") == ['Imported', "Converted to int"]
+    assert step.doc.get_documentation("C", "adv") == ['Imported']
 
     step.save(df_basic, file_name="data.csv", index=False)
     step.save(df_advanced, file_name="adv.csv", index=False)
@@ -246,10 +244,10 @@ def test_auto_propagation2():
     df_advanced['D'] = df_advanced['D'].astype(int)
     step.col_step("adv::D", "Converted to int", ["adv::D"])
 
-    assert step.documentation.get_documentation("A", "data") == [['Imported'], ['Imported'], 'Added A to C']
-    assert step.documentation.get_documentation("B", "data") == ['Imported']
-    assert step.documentation.get_documentation("D", "adv") == ['Imported', "Converted to int"]
-    assert step.documentation.get_documentation("C", "adv") == ['Imported']
+    assert step.doc.get_documentation("A", "data") == [['Imported'], ['Imported'], 'Added A to C']
+    assert step.doc.get_documentation("B", "data") == ['Imported']
+    assert step.doc.get_documentation("D", "adv") == ['Imported', "Converted to int"]
+    assert step.doc.get_documentation("C", "adv") == ['Imported']
 
     step.save(df_basic, file_name="data.csv", alias="data", index=False)
     step.save(df_advanced, file_name="adv.csv", alias="adv", index=False)
@@ -268,8 +266,8 @@ def test_auto_propagation2():
 
     df_basic = step.load(file_name="data2.csv", alias='data')
 
-    assert step.documentation.get_documentation("A", "data") == [['Imported'], ['Imported'], 'Added A to C']
-    assert step.documentation.get_documentation("B", "data") == ['Imported']
+    assert step.doc.get_documentation("A", "data") == [['Imported'], ['Imported'], 'Added A to C']
+    assert step.doc.get_documentation("B", "data") == ['Imported']
 
 
 def test_save_with_alias_load_without():

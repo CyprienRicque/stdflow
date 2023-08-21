@@ -10,7 +10,7 @@ import pandas as pd
 
 from stdflow.stdflow_path import DataPath
 from stdflow.stdflow_utils import get_creation_time, string_to_uuid
-from stdflow_doc.documenter import Documenter
+from stdflow.stdflow_doc.documenter import Documenter
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)

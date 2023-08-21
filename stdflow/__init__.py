@@ -10,7 +10,7 @@ except ImportError:
 
 import pandas as pd
 
-__version__ = "0.0.40"
+__version__ = "0.0.48"
 
 import logging
 import sys
@@ -200,6 +200,7 @@ class Module(object):
         version: str | None | Literal[":default"] | Strftime = ":default",
         file_name: str | Literal[":default", ":auto"] = ":default",
         method: str | object | Literal[":default", ":auto"] = ":default",
+        alias: str = None,
         export_viz_tool: bool = False,
         verbose: bool = False,
         **kwargs,
@@ -212,6 +213,7 @@ class Module(object):
             version=version,
             file_name=file_name,
             method=method,
+            alias=alias,
             export_viz_tool=export_viz_tool,
             verbose=verbose,
             **kwargs,
@@ -222,6 +224,21 @@ class Module(object):
 
     def var(self, key, value, force=False):
         return self.step.var(key, value, force=force)
+
+    def col_step(self, col, col_step, input_cols=None):
+        return self.step.col_step(col, col_step, input_cols=input_cols)
+
+    def get_doc(self, col: str, alias: str | None = None, starts_with: str | None = None):
+        return self.step.get_doc(col, alias=alias, starts_with=starts_with)
+
+    def get_origins_raw(self, col, alias):
+        return self.step.get_origins_raw(col, alias)
+
+    def get_origins(self, col, alias):
+        return self.step.get_origins(col, alias)
+
+    def col_origin(self, col, col_origin, input_cols=None):
+        return self.step.col_origin(col, col_origin, input_cols)
 
 
 if __name__ == "__main__":  # test if run as a script
@@ -434,6 +451,26 @@ def reset():
 
 
 def var(key, value, force=False):
+    ...
+
+
+def col_step(col, col_step, input_cols=None):
+    ...
+
+
+def get_doc(col: str, alias: str | None = None, starts_with: str | None = None):
+    ...
+
+
+def get_origins_raw(col, alias):
+    ...
+
+
+def get_origins(col, alias):
+    ...
+
+
+def col_origin(col, col_origin):
     ...
 
 
