@@ -43,7 +43,7 @@ dependencies = [
 
 [tool.isort]
 profile = "black"
-skip = ["stdflow/stdflow_path/__init__.py", "stdflow/__init__.py"]
+#skip = ["stdflow/stdflow_path/__init__.py", "stdflow/__init__.py"]
 
 [tool.black]
 line-length = 100
