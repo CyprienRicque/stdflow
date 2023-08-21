@@ -1,8 +1,9 @@
 import os
+
 import pandas as pd
 import pytest
 
-from stdflow import StepRunner, Step
+from stdflow import Step, StepRunner
 
 
 def test_create_fake_data():
@@ -11,15 +12,14 @@ def test_create_fake_data():
     print("exists?", os.path.exists("tests/twitter_data_flow/notebooks/load/generate.ipynb"))
     step = StepRunner(
         file_path="tests/twitter_data_flow/notebooks/load/generate.ipynb",
-        variables={
-            "country": "spain",
-            "version": "test"
-        },
+        variables={"country": "spain", "version": "test"},
     )
     step.run()
 
     # assert path ./data/twitter/france/step_raw/v_test/ exists
-    assert os.path.exists("./tests/data/twitter/france/step_raw/v_test/"), "France data does not exist."
+    assert os.path.exists(
+        "./tests/data/twitter/france/step_raw/v_test/"
+    ), "France data does not exist."
 
     step = Step(root="./tests/data", step_in="raw")
     df = step.load(attrs=["twitter", "france"], version="test")

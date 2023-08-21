@@ -1,22 +1,10 @@
 import glob
 import os
-from collections import namedtuple
-from collections.abc import MutableMapping
 
 import pandas as pd
-from box import Box
 
-
-# Converter function
-def convert_data(data, return_type):
-    if return_type == "dict":
-        return data
-    elif return_type == "list":
-        return list(map(namedtuple("NamedDataFrame", ["name", "dataframe"])._make, data.items()))
-    elif return_type == "dotdict":
-        return Box(data)
-    else:
-        raise ValueError('return_type must be either "dict", "list", or "dotdict"')
+# from collections import namedtuple
+# from collections.abc import MutableMapping
 
 
 # Load CSV files

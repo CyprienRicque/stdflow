@@ -1,9 +1,9 @@
-import unittest
 import os
 import random
 import string
+import unittest
 
-from stdflow.stdflow_utils.execution import run_python_file, run_function, run_notebook
+from stdflow.stdflow_utils.execution import run_function, run_notebook, run_python_file
 
 
 class TestEnvExport(unittest.TestCase):
@@ -24,7 +24,9 @@ class TestEnvExport(unittest.TestCase):
             self.assertIn(f"{var}={value}", content)
 
     def test_env_export_function(self):
-        run_function("tests/execution/env_export_function.py", "export_env_var", env_vars=self.env_vars)
+        run_function(
+            "tests/execution/env_export_function.py", "export_env_var", env_vars=self.env_vars
+        )
         with open("/tmp/env_function.txt", "r") as f:
             content = f.read().splitlines()
         for var, value in self.env_vars.items():

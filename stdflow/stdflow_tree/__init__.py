@@ -20,7 +20,11 @@ def display_tree(uuid, data, prefix="", last=True, depth=0, max_depth=None):
     """
     # Prefixes for tree structure
     branch = ("└── " if last else "├── ") if depth != 0 else ""
-    tree_structure = prefix + branch + f"[{str(uuid)[:3]}] {data.get(uuid, {})['step']['step_name']}:{data.get(uuid, {})['step']['path']}"
+    tree_structure = (
+        prefix
+        + branch
+        + f"[{str(uuid)[:3]}] {data.get(uuid, {})['step']['step_name']}:{data.get(uuid, {})['step']['path']}"
+    )
 
     # Print the current node with prefix
     print(tree_structure)
@@ -40,7 +44,7 @@ def display_tree(uuid, data, prefix="", last=True, depth=0, max_depth=None):
     for index, child in enumerate(children):
         is_last_child = index == len(children) - 1
         child_uuid = child["uuid"]
-        display_tree(child_uuid, data, prefix, is_last_child, depth+1, max_depth)
+        display_tree(child_uuid, data, prefix, is_last_child, depth + 1, max_depth)
 
 
 def display_full_tree(data_list, max_depth=None):
@@ -60,7 +64,6 @@ def display_full_tree(data_list, max_depth=None):
 
     for root in root_uuids:
         display_tree(root, data_map, max_depth=max_depth)
-
 
 
 if __name__ == "__main__":
@@ -99,4 +102,4 @@ if __name__ == "__main__":
     ]
     data_list = json.load(open("stdflow/stdflow_viz/metadata.json"))
 
-    display_full_tree(data_list['files'], max_depth=3)
+    display_full_tree(data_list["files"], max_depth=3)

@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import copy
+import json
+import logging
 import uuid
+import warnings
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
-import json
-
-from typing import List, Tuple, Optional, Dict
-import logging
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -55,7 +55,23 @@ class ColStep:
         )
 
     def __repr__(self):
-        return f"({', '.join([a[:4] for a in self.input_cols])}) -> [{self.id[:4]}]{self.alias}{splitter}{self.col} : {self.name}"
+        # if alias is too large write it as 1234...124
+        alias = self.alias
+        if len(alias) > 10:
+            alias = f"{alias[:4]}..{alias[-4:]}"
+
+        return f"|{self.name}| ({', '.join([a[:4] for a in self.input_cols])}) -> [{self.id[:4]}]{alias}{splitter}{self.col}"
+
+
+def to_list(x: Any) -> Any:
+    # Convert pd types to list
+    if isinstance(x, pd.Index):
+        x = x.tolist()
+    elif isinstance(x, pd.Series):
+        x = x.values.tolist()
+    if isinstance(x, str):
+        x = [x]
+    return x
 
 
 class Documenter:
@@ -65,8 +81,13 @@ class Documenter:
         self._step_list: List[ColStep] = []
 
     def document(self, col, col_step, input_cols: list | str, current_step=True):
-        if isinstance(input_cols, str):
-            input_cols = [input_cols]
+        input_cols = to_list(input_cols)
+        if not isinstance(input_cols, list):
+            warnings.warn(
+                f"input cols is not a list. type: {type(input_cols)}",
+                category=UserWarning,
+            )
+
         input_cols_with_ids = self._get_input_cols_details(input_cols)
         alias, col = self._get_output_col_details(col, input_cols_with_ids)
 
@@ -98,8 +119,10 @@ class Documenter:
         self.document(col, col_step, input_cols, current_step)
 
     def _add_step(self, step: ColStep):
-        self.dict_step[step.id] = step
-        self._step_list.append(step)
+        # TODO double check why this work? uuid from new step can be the same as the one of a previously created one?
+        if step not in self._step_list:
+            self.dict_step[step.id] = step
+            self._step_list.append(step)
 
     def dict_for_alias(self, alias):
         """
@@ -168,7 +191,9 @@ class Documenter:
                 df_alias = self._infer_dataframe_alias_from_col_steps(col_name)
 
             if not isinstance(df_alias, str):
-                raise ValueError(f"Column '{col_name}' is ambiguous. Please specify the dataframe name.")
+                raise ValueError(
+                    f"Column '{col_name}' is ambiguous. Please specify the dataframe name."
+                )
 
             input_cols_with_ids.append((df_alias, col_name))
         return input_cols_with_ids
@@ -214,8 +239,7 @@ class Documenter:
         """
         matching_steps = self.highest_matching_cdt(
             self.step_list,
-            lambda step: step.col == col_name
-            and step.name != DROPPED,
+            lambda step: step.col == col_name and step.name != DROPPED,
         )
 
         if not matching_steps:

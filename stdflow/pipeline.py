@@ -1,9 +1,10 @@
 from __future__ import annotations
-from colorama import Fore, Style
 
-from tqdm.notebook import tqdm
 import logging
 from typing import List
+
+from colorama import Fore, Style
+from tqdm.notebook import tqdm
 
 from stdflow import StepRunner
 from stdflow.step import Step
@@ -50,7 +51,9 @@ class Pipeline:
             text = step.worker_path
             end = " " * 4
             start = f"    {i+1:02}."
-            separator_line_len = max(longest_worker_path_adjusted + len(start) + min_blank + len(end), 25)
+            separator_line_len = max(
+                longest_worker_path_adjusted + len(start) + min_blank + len(end), 25
+            )
             separator_line = Style.BRIGHT + "=" * separator_line_len + Style.RESET_ALL
             blank = separator_line_len - len(start) - len(text) - len(end)
 
@@ -68,12 +71,16 @@ class Pipeline:
         self.run()
 
     def __str__(self):
-        s = Style.BRIGHT + """
+        s = (
+            Style.BRIGHT
+            + """
 ================================
             PIPELINE            
 ================================
 
-""" + Style.RESET_ALL
+"""
+            + Style.RESET_ALL
+        )
 
         for i, step in enumerate(self.steps):
             s += f"""{Style.BRIGHT}STEP {i+1}{Style.RESET_ALL}

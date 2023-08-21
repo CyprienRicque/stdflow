@@ -9,13 +9,12 @@ import warnings
 from datetime import datetime
 
 from stdflow.environ_manager import FlowEnv
-from stdflow.stdflow_utils.execution import run_notebook, run_python_file, run_function
-
+from stdflow.stdflow_utils.execution import run_function, run_notebook, run_python_file
 
 try:
     from typing import Any, Literal, Optional, Tuple, Union
 except ImportError:
-    from typing_extensions import Literal, Union, Any, Tuple
+    from typing_extensions import Any, Literal, Tuple, Union
 
 
 logging.basicConfig()

@@ -27,11 +27,12 @@ def load_digi_mentions_indonesia(step):
     pattern = r"ID_Daily\sMentions_CPD\s([\w\s]+)"
     for i in digi_files:
         try:
-            new_digi = step.load(file_name=i, attrs=step.attrs, method="excel", version=None, header=1)
+            new_digi = step.load(
+                file_name=i, attrs=step.attrs, method="excel", version=None, header=1
+            )
         except:
             print(f"Dir contained unrecognized file {i}, ignored")
             continue
-
 
 
 def load_and_process_digi_mentions_indonesia(catalog, brand_dict=None):

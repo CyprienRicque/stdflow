@@ -1,11 +1,10 @@
 import os
-
-import pandas as pd
 import shutil
 
-import stdflow as sf
+import pandas as pd
 import pytest
 
+import stdflow as sf
 from stdflow.stdflow_doc.documenter import DROPPED
 
 
@@ -13,6 +12,7 @@ def setup():
     # Sample datasets
     df1 = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
     df2 = pd.DataFrame({"C": [7, 8, 9], "D": [10, 11, 12]})
+    df3 = pd.DataFrame({"Brand": ["audi", "peugeot", "porsche"], "price": [20, 12, 50]})
 
     # rm -rf "./data/raw/test"
     shutil.rmtree("./data/test/step_raw/", ignore_errors=True)
@@ -22,6 +22,7 @@ def setup():
     # Save datasets to paths
     df1.to_csv("./data/test/step_raw/basic_data.csv", index=False)
     df2.to_csv("./data/test/step_raw/advanced_data.csv", index=False)
+    df3.to_csv("./data/test/step_raw/brands.csv", index=False)
 
 
 def test_export_only():
@@ -56,7 +57,7 @@ def test_export_only():
     sf.attrs = ["test"]
     sf.step_in = "processed"
     sf.step_out = "processed_2"
-    
+
     sf.load(file_name="basic_data.csv", version=None, alias="basic_data")
     assert sf.get_doc("A", "basic_data") == ["random_origin"]
 
@@ -128,7 +129,6 @@ def test_merge_same_alias_set_documentation():
     sf.step_out = "processed"
     sf.version_in = None
 
-
     df_basic = sf.load(file_name="basic_data.csv", alias="data")
     df_advanced = sf.load(file_name="advanced_data.csv", alias="data")
 
@@ -174,7 +174,6 @@ def test_merge_same_alias_set_documentation():
     sf.attrs = ["test"]
     sf.step_in = "processed"
     sf.step_out = "processed_2"
-
 
     sf.load(file_name="data.csv", alias="data")
     # check that the documentation for the merged dataset has created step
@@ -280,7 +279,6 @@ def test_auto_propagation():
     sf.step_out = "processed"
     sf.version_in = None
 
-
     df_basic = sf.load(file_name="basic_data.csv", alias="data")
     df_advanced = sf.load(file_name="advanced_data.csv", alias="adv")
 
@@ -323,7 +321,6 @@ def test_auto_propagation():
     sf.attrs = ["test"]
     sf.step_in = "processed_2"
     sf.step_out = "processed_3"
-
 
     df_basic = sf.load(file_name="data.csv", alias="data")
     df_advanced = sf.load(file_name="adv.csv", alias="adv")
@@ -382,7 +379,6 @@ def test_auto_propagation2():
     sf.step_in = "processed"
     sf.step_out = "processed_2"
 
-
     df_basic = sf.load(file_name="data.csv")
 
     sf.save(df_basic, file_name="data2.csv", index=False)
@@ -394,7 +390,6 @@ def test_auto_propagation2():
     sf.attrs = ["test"]
     sf.step_in = "processed_2"
     sf.step_out = "processed_3"
-
 
     df_basic = sf.load(file_name="data2.csv", alias="data")
 
@@ -463,3 +458,56 @@ def test_merge_new_alias_with_origin():
     assert sf.get_origins("C", "data") == ["advanced_data.csv"]
     assert sf.get_origins("D", "data") == ["advanced_data.csv"]
     assert sf.get_origins("AD", "data") == ["basic_data.csv", "advanced_data.csv"]
+
+
+def test_repeated_load():
+    setup()
+    sf.root = "./data"
+    sf.attrs = "test"
+    sf.step_in = "raw"
+    sf.step_out = "processed"
+
+    sf.load(file_name="brands.csv")
+    sf.load(file_name="brands.csv")
+    sf.load(file_name="brands.csv")
+    assert sf.get_doc("Brand") == ["Imported"]
+
+    sf.col_step("price", "to int", "price")
+    assert sf.get_doc("price") == ["Imported", "to int"]
+
+    sf.load(file_name="brands.csv")
+    sf.load(file_name="basic_data.csv")
+    assert sf.get_doc("price") == ["Imported", "to int"]
+
+
+def test_repeated_load_after_save():
+    setup()
+    sf.reset()
+    sf.root = "./data"
+    sf.attrs = "test"
+    sf.step_in = "raw"
+    sf.step_out = "processed"
+
+    sf.load(file_name="brands.csv")
+    sf.load(file_name="brands.csv")
+    sf.load(file_name="brands.csv")
+
+    df = sf.load(file_name="brands.csv")
+    assert sf.get_doc("Brand") == ["Imported"]
+
+    sf.col_step("price", "to int ()", "price")
+    assert sf.get_doc("price") == ["Imported", "to int ()"]
+
+    sf.load(file_name="brands.csv")
+    assert sf.get_doc("price") == ["Imported", "to int ()"]
+    sf.save(df, file_name="brands.csv")
+
+    sf.reset()
+    sf.root = "./data"
+    sf.attrs = "test"
+    sf.step_in = "processed"
+    sf.step_out = "processed_2"
+
+    df = sf.load(file_name="brands.csv")
+    df = sf.load(file_name="brands.csv")
+    df = sf.load(file_name="brands.csv")

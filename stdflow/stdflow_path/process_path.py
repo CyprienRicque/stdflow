@@ -13,7 +13,13 @@ except ImportError:
 
 from stdflow.config import STEP_PREFIX, VERSION_PREFIX
 from stdflow.stdflow_types.strftime_type import Strftime
-from stdflow.stdflow_utils import detect_folders, fstep, fv, remove_dir, retrieve_from_path
+from stdflow.stdflow_utils import (
+    detect_folders,
+    fstep,
+    fv,
+    remove_dir,
+    retrieve_from_path,
+)
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -23,12 +29,12 @@ logger.setLevel(logging.WARNING)
 # Maybe more elements need to go to Path but for now it's ok to have everything in this class to iterate fast
 class ProcessPath(Path):
     def __init__(
-            self,
-            root: str | None = "./notebooks",  # or src
-            attrs: list | None | str = None,
-            step_name: str | None = None,
-            version: str | Literal[":last", ":first"] = ":last",
-            file_name: str = None,
+        self,
+        root: str | None = "./notebooks",  # or src
+        attrs: list | None | str = None,
+        step_name: str | None = None,
+        version: str | Literal[":last", ":first"] = ":last",
+        file_name: str = None,
     ):
         """
         At this stage all information are present except the version which is to be detected if not specified
@@ -41,10 +47,10 @@ class ProcessPath(Path):
         # if step is str and contains step_, remove it
         super().__init__(root, file_name)
         if isinstance(step_name, str) and step_name.startswith(STEP_PREFIX):
-            step_name = step_name[len(STEP_PREFIX):]
+            step_name = step_name[len(STEP_PREFIX) :]
         # if version is str and contains v_, remove it
         if isinstance(version, str) and version.startswith(VERSION_PREFIX):
-            version = version[len(VERSION_PREFIX):]
+            version = version[len(VERSION_PREFIX) :]
 
         self.attrs: str = "/".join(attrs) if isinstance(attrs, list) else attrs
         self.step_name = step_name

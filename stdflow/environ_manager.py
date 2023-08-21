@@ -8,29 +8,18 @@ import uuid
 import warnings
 from datetime import datetime
 
-from stdflow.stdflow_utils.execution import run_notebook, run_python_file, run_function
-
 from stdflow.stdflow_utils.caller_metadata import (
     get_caller_metadata,
     get_calling_package__,
-    get_notebook_path,
     get_notebook_name,
+    get_notebook_path,
 )
+from stdflow.stdflow_utils.execution import run_function, run_notebook, run_python_file
 
 try:
     from typing import Any, Literal, Optional, Tuple, Union
 except ImportError:
-    from typing_extensions import Literal, Union, Any, Tuple
-
-from types import ModuleType
-
-import pandas as pd
-
-from stdflow.config import DEFAULT_DATE_VERSION_FORMAT, INFER
-from stdflow.filemetadata import FileMetaData, get_file, get_file_md
-from stdflow.stdflow_path import DataPath
-from stdflow.stdflow_types.strftime_type import Strftime
-from stdflow.stdflow_utils import get_arg_value, export_viz_html, string_to_uuid
+    from typing_extensions import Any, Literal, Tuple, Union
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -89,9 +78,7 @@ class FlowEnv:  # has to be singleton
 
     @staticmethod
     def remove_last_path() -> None:
-        os.environ[PATHS_ENV_KEY] = ":".join(
-            os.environ[PATHS_ENV_KEY].split(":")[:-1]
-        )
+        os.environ[PATHS_ENV_KEY] = ":".join(os.environ[PATHS_ENV_KEY].split(":")[:-1])
         if len(os.environ[PATHS_ENV_KEY]) == 0:
             del os.environ[PATHS_ENV_KEY]
 

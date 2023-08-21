@@ -5,7 +5,11 @@ import os
 import warnings
 
 from stdflow.stdflow_path import Path
-from stdflow.stdflow_utils.listing import list_csv_files, list_files_glob, list_excel_files
+from stdflow.stdflow_utils.listing import (
+    list_csv_files,
+    list_excel_files,
+    list_files_glob,
+)
 
 try:
     from typing import Literal, Optional
@@ -13,8 +17,7 @@ except ImportError:
     from typing_extensions import Literal, Optional
 
 from stdflow.config import STEP_PREFIX, VERSION_PREFIX
-from stdflow.stdflow_types.strftime_type import Strftime
-from stdflow.stdflow_utils import detect_folders, fstep, fv, remove_dir, retrieve_from_path
+from stdflow.stdflow_utils import detect_folders, fstep, fv
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)

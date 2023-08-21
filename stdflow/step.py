@@ -10,20 +10,15 @@ import warnings
 from datetime import datetime
 
 from stdflow.environ_manager import FlowEnv
-
-from stdflow.stdflow_utils.caller_metadata import (
-    get_caller_metadata,
-    get_calling_package__,
-    get_notebook_path,
-    get_notebook_name,
-)
 from stdflow.stdflow_doc.documenter import Documenter
+from stdflow.stdflow_utils.caller_metadata import get_caller_metadata, get_notebook_path
 
 try:
     from typing import Any, Literal, Optional, Tuple, Union
 except ImportError:
     from typing_extensions import Literal, Union, Any, Tuple
 
+import pickle
 from types import ModuleType
 
 import pandas as pd
@@ -32,11 +27,24 @@ from stdflow.config import DEFAULT_DATE_VERSION_FORMAT, INFER
 from stdflow.filemetadata import FileMetaData, get_file, get_file_md
 from stdflow.stdflow_path import DataPath
 from stdflow.stdflow_types.strftime_type import Strftime
-from stdflow.stdflow_utils import get_arg_value, export_viz_html, string_to_uuid
+from stdflow.stdflow_utils import export_viz_html, get_arg_value, string_to_uuid
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
+
+
+# TODO move this in utils
+def save_to_pkl(obj, filename):
+    with open(filename, "wb") as f:
+        pickle.dump(obj, f)
+
+
+def load_from_pkl(filename):
+    with open(filename, "rb") as f:
+        obj = pickle.load(f)
+    return obj
+
 
 loaders = dict(
     csv=pd.read_csv,
@@ -49,6 +57,7 @@ loaders = dict(
     feather=pd.read_feather,
     hdf=pd.read_hdf,
     sql=pd.read_sql,
+    pkl=load_from_pkl,
 )
 
 savers = dict(
@@ -62,6 +71,7 @@ savers = dict(
     feather=pd.DataFrame.to_feather,
     hdf=pd.DataFrame.to_hdf,
     sql=pd.DataFrame.to_sql,
+    pkl=save_to_pkl,
 )
 
 
@@ -143,7 +153,9 @@ class Step(ModuleType):
         # all inputs to this step
         self.md_all_files: list[FileMetaData] = md_all_files if md_all_files is not None else []
         # direct input to this step
-        self.md_direct_input_files: list[FileMetaData] = md_direct_input_files if md_direct_input_files is not None else []
+        self.md_direct_input_files: list[FileMetaData] = (
+            md_direct_input_files if md_direct_input_files is not None else []
+        )
         # ================ #
 
         # Default values of load and save functions
@@ -179,9 +191,14 @@ class Step(ModuleType):
         self._var_set[key] = value
         return value
 
-    def col_step(self, col, col_step, input_cols=None):
-        input_cols = input_cols or []
-        self.doc(col, col_step, input_cols)
+    def col_step(
+        self,
+        col,
+        col_step,
+        input_cols: pd.Index | pd.Series | list | str | None = None,
+    ):
+        input_cols = input_cols if input_cols is not None else []
+        self.doc.document(col, col_step, input_cols)
 
     def get_doc(self, col: str, alias: str | None = None, starts_with: str | None = None):
         col_steps = self.doc.get_documentation(col, alias)
@@ -422,17 +439,25 @@ class Step(ModuleType):
         logger.info(f"Saving data to {path.full_path}")
         method(data, path.full_path, **kwargs)
 
-        saved_file_md = FileMetaData.from_data(path, data, method.__str__(), self.md_direct_input_files)
+        saved_file_md = FileMetaData.from_data(
+            path, data, method.__str__(), self.md_direct_input_files
+        )
 
         # update col_steps in metadata from documentation
         if alias is not None:
-            saved_file_md.col_steps = self.doc.metadata(data, alias)  # FIXME step col should be at file level
+            saved_file_md.col_steps = self.doc.metadata(
+                data, alias
+            )  # FIXME step col should be at file level
 
         # automatic input file detection
         if alias is None:
             try:
                 # md_direct_input_files with same file name and attrs
-                input_file = [file for file in self.md_direct_input_files if file.path.attrs == path.attrs and file.path.file_name == path.file_name]
+                input_file = [
+                    file
+                    for file in self.md_direct_input_files
+                    if file.path.attrs == path.attrs and file.path.file_name == path.file_name
+                ]
 
                 # find initial loaded file
                 if len(self.md_direct_input_files) == 1:
@@ -532,7 +557,9 @@ class Step(ModuleType):
         step.md_all_files = [FileMetaData.from_dict(e) for e in d["files"]]
         # data_l_in are input_files of files that are never used as input_files
         input_files = {
-            item["uuid"] for sublist in [e.input_files for e in step.md_all_files] for item in sublist
+            item["uuid"]
+            for sublist in [e.input_files for e in step.md_all_files]
+            for item in sublist
         }
         generated_files = [e for e in step.md_all_files if e.uuid not in input_files]
         step.md_direct_input_files = list(
@@ -542,7 +569,9 @@ class Step(ModuleType):
                 for item in sublist
             }
         )
-        step.md_direct_input_files = [e for e in step.md_all_files if e.uuid in step.md_direct_input_files]  # useless?
+        step.md_direct_input_files = [
+            e for e in step.md_all_files if e.uuid in step.md_direct_input_files
+        ]  # useless?
         return step
 
     @classmethod

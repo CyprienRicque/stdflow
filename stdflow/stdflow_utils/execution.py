@@ -1,14 +1,12 @@
+import importlib.util
+import logging
+import os
+
 import nbformat
 import pandas as pd
-from colorama import Style, Fore
-from traitlets.config import Config
+from colorama import Fore, Style
 from nbconvert.preprocessors import ExecutePreprocessor
-
-import os
-import importlib.util
-
-import logging
-
+from traitlets.config import Config
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -64,11 +62,7 @@ def run_notebook(path, env_vars, **kwargs):
             None,
         )
         last_cell_executed = next(
-            (
-                c
-                for c in out[0]["cells"][::-1]
-                if "metadata" in c and "execution" in c["metadata"]
-            ),
+            (c for c in out[0]["cells"][::-1] if "metadata" in c and "execution" in c["metadata"]),
             None,
         )
         logger.debug(f"notebook execution result: {out}")

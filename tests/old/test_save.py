@@ -56,8 +56,12 @@ def test_save_merge():
 
     s = Step._from_file("./data/es/step_merge/v_202307241247/metadata.json")
 
-    assert len(s.md_all_files) == 4, f"len(s.data_l)={len(s.md_all_files)}, s.data_l={s.md_all_files}"
-    assert len(s.md_direct_input_files) == 2, f"len(s.data_l_in)={len(s.md_direct_input_files)}, s.data_l_in={s.md_direct_input_files}"
+    assert (
+        len(s.md_all_files) == 4
+    ), f"len(s.data_l)={len(s.md_all_files)}, s.data_l={s.md_all_files}"
+    assert (
+        len(s.md_direct_input_files) == 2
+    ), f"len(s.data_l_in)={len(s.md_direct_input_files)}, s.data_l_in={s.md_direct_input_files}"
 
 
 def test_2_step():
@@ -86,8 +90,12 @@ def test_2_step():
     assert os.path.exists("./data/global/step_es_fr_merge/v_0/metadata.json")
 
     s = Step._from_file("data/global/step_es_fr_merge/v_0/metadata.json")
-    assert len(s.md_all_files) == 5, f"len(s.data_l)={len(s.md_all_files)}, s.data_l={s.md_all_files}"
-    assert len(s.md_direct_input_files) == 2, f"len(s.data_l_in)={len(s.md_direct_input_files)}, s.data_l_in={s.md_direct_input_files}"
+    assert (
+        len(s.md_all_files) == 5
+    ), f"len(s.data_l)={len(s.md_all_files)}, s.data_l={s.md_all_files}"
+    assert (
+        len(s.md_direct_input_files) == 2
+    ), f"len(s.data_l_in)={len(s.md_direct_input_files)}, s.data_l_in={s.md_direct_input_files}"
 
 
 def test_path_as_list():
@@ -110,12 +118,20 @@ def test_path_as_list():
     assert os.path.exists("./data/global/all_combined/step_features/features.csv")
 
     s = Step._from_file("data/global/step_es_fr_merge/v_0/metadata.json")
-    assert len(s.md_all_files) == 5, f"len(s.data_l)={len(s.md_all_files)}, s.data_l={s.md_all_files}"
-    assert len(s.md_direct_input_files) == 2, f"len(s.data_l_in)={len(s.md_direct_input_files)}, s.data_l_in={s.md_direct_input_files}"
+    assert (
+        len(s.md_all_files) == 5
+    ), f"len(s.data_l)={len(s.md_all_files)}, s.data_l={s.md_all_files}"
+    assert (
+        len(s.md_direct_input_files) == 2
+    ), f"len(s.data_l_in)={len(s.md_direct_input_files)}, s.data_l_in={s.md_direct_input_files}"
 
     s = Step._from_file("./data/global/all_combined/step_features/metadata.json")
-    assert len(s.md_direct_input_files) == 3, f"len(s.data_l_in)={len(s.md_direct_input_files)}, s.data_l_in={s.md_direct_input_files}"
-    assert len(s.md_all_files) == 7, f"len(s.data_l)={len(s.md_all_files)}, s.data_l={s.md_all_files}"
+    assert (
+        len(s.md_direct_input_files) == 3
+    ), f"len(s.data_l_in)={len(s.md_direct_input_files)}, s.data_l_in={s.md_direct_input_files}"
+    assert (
+        len(s.md_all_files) == 7
+    ), f"len(s.data_l)={len(s.md_all_files)}, s.data_l={s.md_all_files}"
 
 
 if __name__ == "__main__":
