@@ -61,7 +61,7 @@ class FileMetaData:
         return cls(
             path=path,
             columns=d["columns"],
-            col_steps=d["col_steps"],
+            col_steps=d["col_steps"] if "col_steps" in d else [],
             export_method_used=d["export_method_used"],
             input_files=d["input_files"],
             uuid_=d["uuid"],
