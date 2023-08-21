@@ -16,8 +16,8 @@ __version__ = "0.0.51"
 import logging
 import sys
 
-from stdflow.step import GStep
 from stdflow.stdflow_types.strftime_type import Strftime
+from stdflow.step import GStep
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
