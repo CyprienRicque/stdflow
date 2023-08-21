@@ -216,3 +216,6 @@ tests are run with pytest
 ```bash
 pytest
 ```
+
+the tests run a notebook which uses stdflow FIXME
+it is needed to actually install stdflow in the environment for the notebook to use it
