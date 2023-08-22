@@ -338,7 +338,7 @@ class Step(ModuleType):
         version: str | None | Literal[":default", ":last", ":first"] = ":default",
         file_name: str | Literal[":default", ":auto"] = ":default",
         method: str | object | Literal[":default", ":auto"] = ":default",
-        alias: str = None,
+        alias: str = ":ignore",
         file_glob: bool = False,
         verbose: bool = False,
         **kwargs,
@@ -389,7 +389,6 @@ class Step(ModuleType):
         path: DataPath = DataPath.from_input_params(
             root, attrs, step, version, file_name, glob=file_glob
         )
-        logger.info(f"Loading data from {path.full_path}")
         if not path.file_name:
             raise ValueError(f"file_name is None. path: {path}")
 
@@ -401,7 +400,9 @@ class Step(ModuleType):
             method = loaders[method]
 
         # Load data
+        logger.info(f"Loading data from {path.full_path}")
         data = method(path.full_path, **kwargs)
+        logger.info(f"Data loaded from {path.full_path}")
 
         # Add metadata
         previous_step: Step = Step._from_path(path)
@@ -409,12 +410,13 @@ class Step(ModuleType):
         def fake_step():
             previous_step_ = Step()
             previous_step_.md_all_files = [FileMetaData.from_data(path, data)]
-            for md in previous_step_.md_all_files:
-                previous_step_.doc.set_dataframe(
-                    columns=[c["name"] for c in md.columns],
-                    col_steps=md.col_steps,
-                    alias="tmp",
-                )
+            if alias != ":ignore":
+                for md in previous_step_.md_all_files:
+                    previous_step_.doc.set_dataframe(
+                        columns=[c["name"] for c in md.columns],
+                        col_steps=md.col_steps,
+                        alias="tmp",
+                    )
             return previous_step_
 
         def update_current_step_with_previous_step(previous_step_):
@@ -452,13 +454,14 @@ class Step(ModuleType):
             self.md_direct_input_files.append(file_md)
 
         # Update documentation
-        alias = alias or alias_from_file_metadata(file_md)
+        if alias != ":ignore":
+            alias = alias or alias_from_file_metadata(file_md)
 
-        self.doc.set_dataframe(
-            columns=[c["name"] for c in file_md.columns],
-            col_steps=file_md.col_steps,
-            alias=alias,
-        )
+            self.doc.set_dataframe(
+                columns=[c["name"] for c in file_md.columns],
+                col_steps=file_md.col_steps,
+                alias=alias,
+            )
 
         logger.setLevel(original_logger_level)
         return data
@@ -542,6 +545,7 @@ class Step(ModuleType):
         # Save data
         logger.info(f"Saving data to {path.full_path}")
         method(data, path.full_path, **kwargs)
+        logger.info(f"Data saved to {path.full_path}")
 
         saved_file_md = FileMetaData.from_data(
             path, data, method.__str__(), self.md_direct_input_files

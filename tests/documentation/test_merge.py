@@ -51,7 +51,7 @@ def test_export_only():
     assert step.get_doc("A", "basic_data") == ["random_origin"]
 
     step = Step(root="./data", attrs=["test"], step_in="processed", step_out="processed_2")
-    step.load(file_name="basic_data.csv", version=None)
+    step.load(file_name="basic_data.csv", version=None, alias=None)
     assert step.get_doc("A") == ["random_origin"]
 
 
@@ -343,7 +343,7 @@ def test_repeated_load():
     df_basic = step.load(file_name="basic_data.csv")
     df_basic = step.load(file_name="basic_data.csv")
     df_basic = step.load(file_name="basic_data.csv")
-    df_basic = step.load(file_name="basic_data.csv")
+    df_basic = step.load(file_name="basic_data.csv", alias=None)
     assert step.get_doc("A") == [IMPORT + NO_DETAILS]
 
     step.col_step("A", "to int", ["A"])
