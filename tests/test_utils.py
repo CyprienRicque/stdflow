@@ -1,7 +1,7 @@
 import pytest
 
 from stdflow.stdflow_utils import path_to_str, str_to_path
-from stdflow_path import Path, DataPath
+from stdflow.stdflow_path import Path, DataPath
 
 
 def test_basic_case():

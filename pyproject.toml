@@ -7,7 +7,7 @@ py-modules = ["stdflow"]
 
 [project]
 name = "stdflow"
-version = "0.0.53"
+version = "0.0.54"
 description = "[alpha] A package that transform your notebooks and python files into pipeline steps by standardizing the data input / output."
 readme = "README.md"
 authors = [
