@@ -19,7 +19,7 @@ except ImportError:
 
 import pandas as pd
 
-__version__ = "0.0.60"
+__version__ = "0.0.61"
 
 import logging
 import sys
@@ -181,7 +181,7 @@ class Module(object):
         version: str | None | Literal[":default", ":last", ":first"] = ":default",
         file_name: str | Literal[":default", ":auto"] = ":default",
         method: str | object | Literal[":default", ":auto"] = ":default",
-        alias: str = None,
+        alias: str = ":ignore",
         file_glob: bool = False,
         verbose: bool = False,
         **kwargs,
@@ -209,7 +209,7 @@ class Module(object):
         version: str | None | Literal[":default"] | Strftime = ":default",
         file_name: str | Literal[":default", ":auto"] = ":default",
         method: str | object | Literal[":default", ":auto"] = ":default",
-        alias: str = None,
+        alias: str = ":ignore",
         export_viz_tool: bool = False,
         verbose: bool = False,
         **kwargs,
@@ -496,7 +496,7 @@ def load(
     version: str | None | Literal[":default", ":last", ":first"] = ":default",
     file_name: str | Literal[":default", ":auto"] = ":default",
     method: str | object | Literal[":default", ":auto"] = ":default",
-    alias: str = None,
+    alias: str = ":ignore",
     file_glob: bool = False,
     verbose: bool = False,
     **kwargs,
@@ -513,7 +513,7 @@ def save(
     version: str | None | Literal[":default"] | Strftime = ":default",
     file_name: str | Literal[":default", ":auto"] = ":default",
     method: str | object | Literal[":default", ":auto"] = ":default",
-    alias: str = None,
+    alias: str = ":ignore",
     export_viz_tool: bool = False,
     verbose: bool = False,
     **kwargs,
