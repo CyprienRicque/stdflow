@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from stdflow import Step
-from stdflow.stdflow_doc.documenter import DROPPED, IMPORTED
+from stdflow.stdflow_doc.documenter import DROP, IMPORT, NO_DETAILS, ORIGIN_NAME
 
 
 def setup():
@@ -35,27 +35,27 @@ def test_basic_documentation():
     step.col_step("basic_data::A", "Loaded from raw data.", ["basic_data::A"])
     step.col_step("basic_data::B", "Loaded from raw data.", ["basic_data::B"])
 
-    assert step.doc.get_documentation("A", "basic_data") == ["Imported", "Loaded from raw data."]
-    assert step.doc.get_documentation("B", "basic_data") == ["Imported", "Loaded from raw data."]
+    assert step.doc.get_documentation("A", "basic_data") == [IMPORT + NO_DETAILS, "Loaded from raw data."]
+    assert step.doc.get_documentation("B", "basic_data") == [IMPORT + NO_DETAILS, "Loaded from raw data."]
 
     df["A+B"] = df["A"] + df["B"]
     df["A*B"] = df["A"] * df["B"]
 
     step.col_step("basic_data::A+B", "Column A plus column B.", ["basic_data::A", "basic_data::B"])
 
-    assert step.doc.get_documentation("A", "basic_data") == ["Imported", "Loaded from raw data."]
-    assert step.doc.get_documentation("B", "basic_data") == ["Imported", "Loaded from raw data."]
+    assert step.doc.get_documentation("A", "basic_data") == [IMPORT + NO_DETAILS, "Loaded from raw data."]
+    assert step.doc.get_documentation("B", "basic_data") == [IMPORT + NO_DETAILS, "Loaded from raw data."]
     assert step.doc.get_documentation("A+B", "basic_data") == [
-        ["Imported", "Loaded from raw data."],
-        ["Imported", "Loaded from raw data."],
+        [IMPORT + NO_DETAILS, "Loaded from raw data."],
+        [IMPORT + NO_DETAILS, "Loaded from raw data."],
         "Column A plus column B.",
     ]
 
     step.save(df, file_name="basic_data.csv", version=None, alias="basic_data")
 
     assert step.doc.get_documentation("A+B", "basic_data") == [
-        ["Imported", "Loaded from raw data."],
-        ["Imported", "Loaded from raw data."],
+        [IMPORT + NO_DETAILS, "Loaded from raw data."],
+        [IMPORT + NO_DETAILS, "Loaded from raw data."],
         "Column A plus column B.",
     ]
 
@@ -73,12 +73,12 @@ def test_drop():
     step.col_step("basic_data::A+B", "Column A plus column B.", ["basic_data::A", "basic_data::B"])
 
     df.drop(columns=["A", "B"], inplace=True)
-    step.col_step("A", DROPPED, ["basic_data::A"])
+    step.col_step("A", DROP, ["basic_data::A"])
 
     assert step.doc.get_documentation("A", "basic_data", include_dropped=True) == [
-        "Imported",
+        IMPORT + NO_DETAILS,
         "Loaded from raw data.",
-        DROPPED,
+        DROP,
     ]
 
     step.save(
@@ -89,14 +89,14 @@ def test_drop():
 
     step.load(file_name="basic_data.csv", version=None, alias="basic_data")
     assert step.doc.get_documentation("B", "basic_data", include_dropped=True) == [
-        "Imported",
+        IMPORT + NO_DETAILS,
         "Loaded from raw data.",
-        DROPPED,
+        DROP,
     ]
     assert step.doc.get_documentation("A", "basic_data", include_dropped=True) == [
-        "Imported",
+        IMPORT + NO_DETAILS,
         "Loaded from raw data.",
-        DROPPED,
+        DROP,
     ]
 
 
@@ -126,7 +126,7 @@ def test_load_twice_same_dataset_same_alias():
 
     assert df1["A"].equals(df2["A"])
     assert step.doc.get_documentation("A", "basic_data") == [
-        "Imported",
+        IMPORT + NO_DETAILS,
         "Doubled column A values.",
         "Doubled column A values again.",
     ]
@@ -155,11 +155,11 @@ def test_load_twice_same_dataset_diff_alias():
 
     assert df1["A"].equals(df2["A"])
     assert step.doc.get_documentation("A", "basic_data_1") == [
-        "Imported",
+        IMPORT + NO_DETAILS,
         "Doubled column A values.",
     ]
     assert step.doc.get_documentation("A", "basic_data_2") == [
-        "Imported",
+        IMPORT + NO_DETAILS,
         "Doubled column A values.",
     ]
     # save the 2
@@ -173,11 +173,11 @@ def test_load_twice_same_dataset_diff_alias():
     step.load(file_name="basic_data2.csv", alias="basic_data_2")
     # documentation check
     assert step.doc.get_documentation("A", "basic_data_1") == [
-        "Imported",
+        IMPORT + NO_DETAILS,
         "Doubled column A values.",
     ]
     assert step.doc.get_documentation("A", "basic_data_2") == [
-        "Imported",
+        IMPORT + NO_DETAILS,
         "Doubled column A values.",
     ]
 
@@ -204,14 +204,16 @@ def test_split_2():
     df = sf.load(file_name="basic_data.csv", version=None, alias="basic_data")
 
     for col in set(df.columns):
-        sf.col_step(f"base::{col}", IMPORTED, [])
-        assert sf.get_doc(f"base::{col}") == [IMPORTED]
-        sf.col_origin(f"base::{col}", "CMI Offline Sales")
+        sf.col_step(f"base::{col}", IMPORT + "yes", [])
+        assert sf.get_doc(f"base::{col}") == [IMPORT + "yes"]
+
+        sf.col_origin_name(f"base::{col}", "CMI Offline Sales")
+
         sf.col_step(f"indo::{col}", "country: indonesia", in_cols=[f"base::{col}"])
         sf.col_step(f"india::{col}", "country: india", in_cols=[f"base::{col}"])
 
-        assert sf.get_doc(f"india::{col}") == ['Imported', 'origin: CMI Offline Sales', 'country: india']
-        assert sf.get_doc(f"indo::{col}") == ['Imported', 'origin: CMI Offline Sales', 'country: indonesia']
+        assert sf.get_doc(f"india::{col}") == [IMPORT + "yes", ORIGIN_NAME + 'CMI Offline Sales', 'country: india']
+        assert sf.get_doc(f"indo::{col}") == [IMPORT + "yes", ORIGIN_NAME + 'CMI Offline Sales', 'country: indonesia']
 
     sf.save(df, file_name="basic_data_indo.csv", version=None, alias="indo")  # TODO check behavior if saving twice with same file name and loading and getting documentation
     sf.save(df, file_name="basic_data_india.csv", version=None, alias="india")
@@ -221,7 +223,7 @@ def test_split_2():
     sf.attrs = ["test"]
     sf.step_in = "processed"
     df_indo = sf.load(file_name="basic_data_indo.csv", version=None, alias="indo")
-    assert sf.get_doc(f"indo::A") == ['Imported', 'origin: CMI Offline Sales', 'country: indonesia']
+    assert sf.get_doc(f"indo::A") == [IMPORT + "yes", ORIGIN_NAME + 'CMI Offline Sales', 'country: indonesia']
 
 
 def test_rename():
@@ -233,19 +235,19 @@ def test_rename():
 
     # test assert
     with pytest.raises(ValueError):
-        step.col_origin("basic_data::A_renamed", "Renamed column A.")
+        step.col_origin_name("basic_data::A_renamed", "Renamed column A.")
 
-    step.col_origin("A_renamed", "test", in_cols="A")
-    step.col_origin("A_renamed", "test2", ["A_renamed"])
-    step.col_origin("A_renamed", "test3", "A_renamed")
-    step.col_origin("A_renamed", "test4")
+    step.col_origin_name("A_renamed", "test", in_cols="A")
+    step.col_origin_name("A_renamed", "test2", ["A_renamed"])
+    step.col_origin_name("A_renamed", "test3", "A_renamed")
+    step.col_origin_name("A_renamed", "test4")
 
     assert step.get_doc("A_renamed") == [
-        "Imported",
-        "origin: test",
-        "origin: test2",
-        "origin: test3",
-        "origin: test4",
+        IMPORT + NO_DETAILS,
+        ORIGIN_NAME + "test",
+        ORIGIN_NAME + "test2",
+        ORIGIN_NAME + "test3",
+        ORIGIN_NAME + "test4",
     ]
 
     step.save(df, file_name="split1.csv", version=None, alias="df")

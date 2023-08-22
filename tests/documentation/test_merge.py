@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from stdflow import Step
-from stdflow.stdflow_doc.documenter import DROPPED
+from stdflow.stdflow_doc.documenter import DROP, CREATE, NO_DETAILS, IMPORT, ORIGIN_NAME
 
 
 def setup():
@@ -37,7 +37,7 @@ def test_export_only():
 
     # test assert
     with pytest.raises(ValueError):
-        step.col_origin("A", "random_origin")
+        step.col_origin_name("A", "random_origin")
 
     # document random origin
     step.col_step("basic_data::A", "random_origin", [])
@@ -87,10 +87,10 @@ def test_merge_new_alias():
     step = Step(root="./data", attrs=["test"], step_in="processed", step_out="processed_2")
     step.load(file_name="merged_data.csv", alias="merged_data")
     # check that the documentation for the merged dataset has created step
-    assert step.doc.get_documentation("A", "merged_data") == ["Created"]
-    assert step.doc.get_documentation("B", "merged_data") == ["Created"]
-    assert step.doc.get_documentation("C", "merged_data") == ["Created"]
-    assert step.doc.get_documentation("D", "merged_data") == ["Created"]
+    assert step.doc.get_documentation("A", "merged_data") == [CREATE + NO_DETAILS]
+    assert step.doc.get_documentation("B", "merged_data") == [CREATE + NO_DETAILS]
+    assert step.doc.get_documentation("C", "merged_data") == [CREATE + NO_DETAILS]
+    assert step.doc.get_documentation("D", "merged_data") == [CREATE + NO_DETAILS]
 
 
 def test_merge_same_alias_set_documentation():
@@ -115,17 +115,17 @@ def test_merge_same_alias_set_documentation():
     step.col_step("data::D", "Merged", ["data::D"])
 
     # check that the documentation for the merged dataset is empty
-    assert step.doc.get_documentation("A", "data") == ["Imported", "Converted to int", "Merged"]
-    assert step.doc.get_documentation("B", "data") == ["Imported"]
+    assert step.doc.get_documentation("A", "data") == [IMPORT + NO_DETAILS, "Converted to int", "Merged"]
+    assert step.doc.get_documentation("B", "data") == [IMPORT + NO_DETAILS]
     assert step.doc.get_documentation("D", "data") == [
-        ["Imported"],
-        ["Imported"],
+        [IMPORT + NO_DETAILS],
+        [IMPORT + NO_DETAILS],
         "Added column A",
         "Merged",
     ]
     assert step.doc.get_documentation("C", "data") == [
-        ["Imported"],
-        [["Imported"], ["Imported"], "Added column A"],
+        [IMPORT + NO_DETAILS],
+        [[IMPORT + NO_DETAILS], [IMPORT + NO_DETAILS], "Added column A"],
         "Added column D",
         "Merged",
     ]
@@ -135,17 +135,17 @@ def test_merge_same_alias_set_documentation():
     step = Step(root="./data", attrs=["test"], step_in="processed", step_out="processed_2")
     step.load(file_name="data.csv", alias="data")
     # check that the documentation for the merged dataset has created step
-    assert step.doc.get_documentation("A", "data") == ["Imported", "Converted to int", "Merged"]
-    assert step.doc.get_documentation("B", "data") == ["Imported"]
+    assert step.doc.get_documentation("A", "data") == [IMPORT + NO_DETAILS, "Converted to int", "Merged"]
+    assert step.doc.get_documentation("B", "data") == [IMPORT + NO_DETAILS]
     assert step.doc.get_documentation("D", "data") == [
-        ["Imported"],
-        ["Imported"],
+        [IMPORT + NO_DETAILS],
+        [IMPORT + NO_DETAILS],
         "Added column A",
         "Merged",
     ]
     assert step.doc.get_documentation("C", "data") == [
-        ["Imported"],
-        [["Imported"], ["Imported"], "Added column A"],
+        [IMPORT + NO_DETAILS],
+        [[IMPORT + NO_DETAILS], [IMPORT + NO_DETAILS], "Added column A"],
         "Added column D",
         "Merged",
     ]
@@ -163,10 +163,10 @@ def test_merge_same_alias_same_data():
     df_advanced["A"] = df_advanced["A"].astype(int)
     step.col_step("A", "Converted to int", ["A"], alias='adv')
 
-    assert step.doc.get_documentation("A", "data") == [["Imported"], ["Imported"], "Added A to B"]
-    assert step.doc.get_documentation("B", "data") == ["Imported"]
-    assert step.doc.get_documentation("A", "adv") == ["Imported", "Converted to int"]
-    assert step.doc.get_documentation("B", "adv") == ["Imported"]
+    assert step.doc.get_documentation("A", "data") == [[IMPORT + NO_DETAILS], [IMPORT + NO_DETAILS], "Added A to B"]
+    assert step.doc.get_documentation("B", "data") == [IMPORT + NO_DETAILS]
+    assert step.doc.get_documentation("A", "adv") == [IMPORT + NO_DETAILS, "Converted to int"]
+    assert step.doc.get_documentation("B", "adv") == [IMPORT + NO_DETAILS]
 
     step.save(df_basic, file_name="data.csv", alias="data", index=False)
     step.save(df_advanced, file_name="adv.csv", alias="adv", index=False)
@@ -181,7 +181,7 @@ def test_merge_same_alias_same_data():
     # merged_df = pd.merge(df_basic, df_advanced, left_on="A", right_on="A", how="inner")
 
     # check that the documentation for the merged dataset is empty
-    # assert step.documentation.get_documentation("A", "data") == ['Imported', "Converted to int", "Merged"]
+    # assert step.documentation.get_documentation("A", "data") == [IMPORT + NO_DETAILS, "Converted to int", "Merged"]
 
 
 def test_ambigous():
@@ -196,8 +196,8 @@ def test_ambigous():
 
     with pytest.raises(ValueError):
         assert step.doc.get_documentation("A", "data") == [
-            ["Imported"],
-            ["Imported"],
+            [IMPORT + NO_DETAILS],
+            [IMPORT + NO_DETAILS],
             "Added A to C",
         ]
 
@@ -214,10 +214,10 @@ def test_auto_propagation():
     df_advanced["D"] = df_advanced["D"].astype(int)
     step.col_step("D", "Converted to int", ["D"])
 
-    assert step.doc.get_documentation("A", "data") == [["Imported"], ["Imported"], "Added A to C"]
-    assert step.doc.get_documentation("B", "data") == ["Imported"]
-    assert step.doc.get_documentation("D", "adv") == ["Imported", "Converted to int"]
-    assert step.doc.get_documentation("C", "adv") == ["Imported"]
+    assert step.doc.get_documentation("A", "data") == [[IMPORT + NO_DETAILS], [IMPORT + NO_DETAILS], "Added A to C"]
+    assert step.doc.get_documentation("B", "data") == [IMPORT + NO_DETAILS]
+    assert step.doc.get_documentation("D", "adv") == [IMPORT + NO_DETAILS, "Converted to int"]
+    assert step.doc.get_documentation("C", "adv") == [IMPORT + NO_DETAILS]
 
     step.save(df_basic, file_name="data.csv", alias="data", index=False)
     step.save(df_advanced, file_name="adv.csv", alias="adv", index=False)
@@ -239,15 +239,15 @@ def test_auto_propagation():
     df_basic = step.load(file_name="data.csv", alias="data")
     df_advanced = step.load(file_name="adv.csv", alias="adv")
 
-    assert step.doc.get_documentation("A", "data") == [["Imported"], ["Imported"], "Added A to C"]
-    assert step.doc.get_documentation("B", "data") == ["Imported"]
-    assert step.doc.get_documentation("D", "adv") == ["Imported", "Converted to int"]
-    assert step.doc.get_documentation("C", "adv") == ["Imported"]
+    assert step.doc.get_documentation("A", "data") == [[IMPORT + NO_DETAILS], [IMPORT + NO_DETAILS], "Added A to C"]
+    assert step.doc.get_documentation("B", "data") == [IMPORT + NO_DETAILS]
+    assert step.doc.get_documentation("D", "adv") == [IMPORT + NO_DETAILS, "Converted to int"]
+    assert step.doc.get_documentation("C", "adv") == [IMPORT + NO_DETAILS]
 
     step.save(df_basic, file_name="data.csv", index=False)
     step.save(df_advanced, file_name="adv.csv", index=False)
 
-    # assert step.documentation.get_documentation("A", "data") == [['Imported'], ['Imported'], 'Added A to B']
+    # assert step.documentation.get_documentation("A", "data") == [[IMPORT + NO_DETAILS], [IMPORT + NO_DETAILS], 'Added A to B']
 
 
 def test_auto_propagation2():
@@ -262,10 +262,10 @@ def test_auto_propagation2():
     df_advanced["D"] = df_advanced["D"].astype(int)
     step.col_step("adv::D", "Converted to int", ["adv::D"])
 
-    assert step.doc.get_documentation("A", "data") == [["Imported"], ["Imported"], "Added A to C"]
-    assert step.doc.get_documentation("B", "data") == ["Imported"]
-    assert step.doc.get_documentation("D", "adv") == ["Imported", "Converted to int"]
-    assert step.doc.get_documentation("C", "adv") == ["Imported"]
+    assert step.doc.get_documentation("A", "data") == [[IMPORT + NO_DETAILS], [IMPORT + NO_DETAILS], "Added A to C"]
+    assert step.doc.get_documentation("B", "data") == [IMPORT + NO_DETAILS]
+    assert step.doc.get_documentation("D", "adv") == [IMPORT + NO_DETAILS, "Converted to int"]
+    assert step.doc.get_documentation("C", "adv") == [IMPORT + NO_DETAILS]
 
     step.save(df_basic, file_name="data.csv", alias="data", index=False)
     step.save(df_advanced, file_name="adv.csv", alias="adv", index=False)
@@ -284,8 +284,8 @@ def test_auto_propagation2():
 
     df_basic = step.load(file_name="data2.csv", alias="data")
 
-    assert step.doc.get_documentation("A", "data") == [["Imported"], ["Imported"], "Added A to C"]
-    assert step.doc.get_documentation("B", "data") == ["Imported"]
+    assert step.doc.get_documentation("A", "data") == [[IMPORT + NO_DETAILS], [IMPORT + NO_DETAILS], "Added A to C"]
+    assert step.doc.get_documentation("B", "data") == [IMPORT + NO_DETAILS]
 
 
 def test_save_with_alias_load_without():
@@ -304,13 +304,13 @@ def test_merge_new_alias_with_origin():
 
     step.col_step("data::A", "to int", ["data::A"])
     step.col_step("data::A", "to int 2", ["data::A"])
-    step.col_origin("A", "basic_data.csv")
-    step.col_origin("B", "basic_data.csv")
-    step.col_origin("C", "advanced_data.csv")
-    step.col_origin("D", "advanced_data.csv")
+    step.col_origin_name("A", "basic_data.csv")
+    step.col_origin_name("B", "basic_data.csv")
+    step.col_origin_name("C", "advanced_data.csv")
+    step.col_origin_name("D", "advanced_data.csv")
     df_basic["AD"] = df_basic["A"] + df_advanced["D"]
 
-    assert step.get_origins_raw("A", "data") == ["origin: basic_data.csv"]
+    assert step.get_origin_names_raw("A", "data") == [ORIGIN_NAME + "basic_data.csv"]
 
     step.col_step("data::AD", "Added A to D", ["data::A", "data::D"])
 
@@ -319,20 +319,20 @@ def test_merge_new_alias_with_origin():
     step.save(merged_df, file_name="merged_data.csv", version=None, alias="data")
 
     # Check origins
-    assert step.get_origins_raw("A", "data") == ["origin: basic_data.csv"]
-    assert step.get_origins_raw("B", "data") == ["origin: basic_data.csv"]
-    assert step.get_origins_raw("C", "data") == ["origin: advanced_data.csv"]
-    assert step.get_origins_raw("D", "data") == ["origin: advanced_data.csv"]
-    assert step.get_origins_raw("AD", "data") == [
-        ["origin: basic_data.csv"],
-        ["origin: advanced_data.csv"],
+    assert step.get_origin_names_raw("A", "data") == [ORIGIN_NAME + "basic_data.csv"]
+    assert step.get_origin_names_raw("B", "data") == [ORIGIN_NAME + "basic_data.csv"]
+    assert step.get_origin_names_raw("C", "data") == [ORIGIN_NAME + "advanced_data.csv"]
+    assert step.get_origin_names_raw("D", "data") == [ORIGIN_NAME + "advanced_data.csv"]
+    assert step.get_origin_names_raw("AD", "data") == [
+        [ORIGIN_NAME + "basic_data.csv"],
+        [ORIGIN_NAME + "advanced_data.csv"],
     ]
 
-    assert step.get_origins("A", "data") == ["basic_data.csv"]
-    assert step.get_origins("B", "data") == ["basic_data.csv"]
-    assert step.get_origins("C", "data") == ["advanced_data.csv"]
-    assert step.get_origins("D", "data") == ["advanced_data.csv"]
-    assert step.get_origins("AD", "data") == ["basic_data.csv", "advanced_data.csv"]
+    assert step.get_origin_names("A", "data") == ["basic_data.csv"]
+    assert step.get_origin_names("B", "data") == ["basic_data.csv"]
+    assert step.get_origin_names("C", "data") == ["advanced_data.csv"]
+    assert step.get_origin_names("D", "data") == ["advanced_data.csv"]
+    assert step.get_origin_names("AD", "data") == ["basic_data.csv", "advanced_data.csv"]
 
 
 def test_repeated_load():
@@ -344,14 +344,14 @@ def test_repeated_load():
     df_basic = step.load(file_name="basic_data.csv")
     df_basic = step.load(file_name="basic_data.csv")
     df_basic = step.load(file_name="basic_data.csv")
-    assert step.get_doc("A") == ["Imported"]
+    assert step.get_doc("A") == [IMPORT + NO_DETAILS]
 
     step.col_step("A", "to int", ["A"])
-    assert step.get_doc("A") == ["Imported", "to int"]
+    assert step.get_doc("A") == [IMPORT + NO_DETAILS, "to int"]
 
     df_basic = step.load(file_name="basic_data.csv")
     df_basic = step.load(file_name="basic_data.csv")
-    assert step.get_doc("A") == ["Imported", "to int"]
+    assert step.get_doc("A") == [IMPORT + NO_DETAILS, "to int"]
 
 
 def test_cols_as_index():
@@ -365,7 +365,7 @@ def test_cols_as_index():
     assert isinstance(cols, pd.Index)
     step.col_step("data::A", "sum over all cols", cols)
 
-    assert step.get_doc("A") == [["Imported"], ["Imported"], "sum over all cols"]
+    assert step.get_doc("A") == [[IMPORT + NO_DETAILS], [IMPORT + NO_DETAILS], "sum over all cols"]
 
 
 def test_cols_as_series():
@@ -380,4 +380,4 @@ def test_cols_as_series():
     assert isinstance(cols, pd.Series)
     step.col_step("data::A", "sum over all cols", cols)
 
-    assert step.get_doc("A") == [["Imported"], ["Imported"], "sum over all cols"]
+    assert step.get_doc("A") == [[IMPORT + NO_DETAILS], [IMPORT + NO_DETAILS], "sum over all cols"]

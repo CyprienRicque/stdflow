@@ -13,9 +13,13 @@ logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 
-DROPPED = "Dropped"
-IMPORTED = "Imported"
-CREATED = "Created"
+DROP = "Drop: "
+IMPORT = "Import: "
+CREATE = "Create: "
+ORIGIN_NAME = "Origin Name: "
+ORIGIN_PATH = "Origin Path: "
+
+NO_DETAILS = "(no details)"
 
 splitter = "::"
 
@@ -82,11 +86,11 @@ class Documenter:
         self.dict_step: Dict[str, ColStep] = {}
         self._step_list: List[ColStep] = []
 
-    def document(self, col, col_step, *, in_cols: Iterable | str = None, alias: str = None, current_step=True):
+    def document(self, col, name, *, in_cols: Iterable | str | None = None, alias: str = None, current_step=True):
         """
 
         :param col: column name to document
-        :param col_step: documentation of the step
+        :param name: documentation of the step
         :param in_cols: input columns to the current one
         :param alias: alias of the dataframe of the column (overwritten if col is of the form alias::col)
         :param current_step: False means the step was imported
@@ -120,7 +124,7 @@ class Documenter:
         step = ColStep(
             alias=alias,
             col=col,
-            col_step=col_step,
+            col_step=name,
             input_cols=input_uuids,
             current_step=current_step,
         )
@@ -226,7 +230,7 @@ class Documenter:
         if alias == "tmp" and missing_cols:
             logger.info(f"Columns {missing_cols} do not have origin documentation.")
         for col in missing_cols:
-            self(f"{alias}{splitter}{col}", IMPORTED, [])
+            self(f"{alias}{splitter}{col}", IMPORT + NO_DETAILS, [])
         # End add missing cols
 
         if alias not in self.input_df_alias_to_cols:
@@ -262,7 +266,7 @@ class Documenter:
         """
         matching_steps = self.highest_matching_cdt(
             self.step_list,
-            lambda step: step.col == col_name and step.name != DROPPED,
+            lambda step: step.col == col_name and step.name != DROP,
         )
 
         if not matching_steps:
@@ -352,7 +356,7 @@ class Documenter:
 
     def get_drop_steps(self, df_cols, top_level_steps, alias):
         """Add DROPPED step for columns that are not in the DataFrame."""
-        documented_cols: List[str] = [step.col for step in top_level_steps if step.name != DROPPED]
+        documented_cols: List[str] = [step.col for step in top_level_steps if step.name != DROP]
         drop_cols = list(set(documented_cols) - set(df_cols))
         to_be_dropped = [step for step in top_level_steps if step.col in drop_cols]
 
@@ -360,7 +364,7 @@ class Documenter:
         for step in to_be_dropped:
             drop_steps.append(
                 self.add_step_simplified(
-                    alias, step.col, DROPPED, [step], current_step=True, return_=True
+                    alias, step.col, DROP, [step], current_step=True, return_=True
                 )
             )
         return drop_steps
@@ -371,7 +375,7 @@ class Documenter:
         create_steps = []
         for col in created_cols:
             create_steps.append(
-                self.add_step_simplified(alias, col, CREATED, [], current_step=True, return_=True)
+                self.add_step_simplified(alias, col, CREATE + NO_DETAILS, [], current_step=True, return_=True)
             )
         return create_steps
 
@@ -384,7 +388,7 @@ class Documenter:
         all_steps_alias = self.get_steps_for_alias(alias)
         all_cols_alias = list(set([step.col for step in all_steps_alias]))
         last_level_steps = self.last_steps_for_each_col(all_cols_alias, alias)
-        return [step for step in last_level_steps if (drop_included or step.name != DROPPED)]
+        return [step for step in last_level_steps if (drop_included or step.name != DROP)]
 
     def metadata(self, df, alias):
         df_cols = list(df.columns)
@@ -426,7 +430,7 @@ class Documenter:
             self.step_list,
             lambda step: step.col == col_name
             and step.alias == df_alias
-            and (include_dropped or step.name != DROPPED),
+            and (include_dropped or step.name != DROP),
         )
 
         if not matching_steps:

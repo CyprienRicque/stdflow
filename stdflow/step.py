@@ -9,12 +9,23 @@ import uuid
 import warnings
 from datetime import datetime
 
+# isort: off
 from stdflow.environ_manager import FlowEnv
-from stdflow.stdflow_doc.documenter import Documenter
+from stdflow.stdflow_doc.documenter import (
+    Documenter,
+    CREATE,
+    IMPORT,
+    DROP,
+    ORIGIN_NAME,
+    ORIGIN_PATH,
+    NO_DETAILS,
+)
 from stdflow.stdflow_utils.caller_metadata import get_caller_metadata, get_notebook_path
 
+# isort: on
+
 try:
-    from typing import Any, Literal, Optional, Tuple, Union
+    from typing import Any, Literal, Optional, Tuple, Union, Iterable
 except ImportError:
     from typing_extensions import Literal, Union, Any, Tuple
 
@@ -127,21 +138,21 @@ class GStep:
 class Step(ModuleType):
     def __init__(
         self,
-        step_in: str | None = None,
-        version_in: str | None = ":last",
-        attrs_in: str | list[str] | None = ":default",
-        file_name_in: str | None = ":default",
-        method_in: str | object | None = ":auto",
-        root_in: str | None = ":default",
-        step_out: str | None = None,
-        version_out: str | None = DEFAULT_DATE_VERSION_FORMAT,
-        attrs_out: str | list[str] | None = ":default",
-        file_name_out: str | None = ":default",
-        method_out: str | object | None = ":auto",
-        root_out: str | None = ":default",
         root: str | None = "./data",
         attrs: str | list[str] | None = None,
         file_name: str | None = ":auto",
+        method_in: str | object | None = ":auto",
+        root_in: str | None = ":default",
+        attrs_in: str | list[str] | None = ":default",
+        step_in: str | None = None,
+        version_in: str | None = ":last",
+        file_name_in: str | None = ":default",
+        method_out: str | object | None = ":auto",
+        root_out: str | None = ":default",
+        attrs_out: str | list[str] | None = ":default",
+        step_out: str | None = None,
+        version_out: str | None = DEFAULT_DATE_VERSION_FORMAT,
+        file_name_out: str | None = ":default",
         md_all_files: list[FileMetaData] = None,
         md_direct_input_files: list[FileMetaData] = None,
     ):
@@ -159,28 +170,65 @@ class Step(ModuleType):
         # ================ #
 
         # Default values of load and save functions
-        self._step_in = step_in
-        self._version_in = version_in
-        self._attrs_in = attrs_in
-        self._file_name_in = file_name_in
         self._method_in = method_in
         self._root_in = root_in
+        self._attrs_in = attrs_in
+        self._step_in = step_in
+        self._version_in = version_in
+        self._file_name_in = file_name_in
 
-        self._step_out = step_out
-        self._version_out = version_out
-        self._attrs_out = attrs_out
-        self._file_name_out = file_name_out
         self._method_out = method_out
         self._root_out = root_out
+        self._attrs_out = attrs_out
+        self._step_out = step_out
+        self._version_out = version_out
+        self._file_name_out = file_name_out
 
         self._root = root
-        self._file_name = file_name
         self._attrs = attrs
+        self._file_name = file_name
 
         # Used when actually using the step to save the variables set
         self._var_set = {}
 
         self.doc = Documenter()
+
+    def set_defaults(  # TODO some are not implemented
+        self,
+        *,
+        root: str | None = "./data",
+        attrs: str | list[str] | None = None,
+        file_name: str | None = ":auto",
+        method_in: str | object | None = ":auto",
+        root_in: str | None = ":default",
+        attrs_in: str | list[str] | None = ":default",
+        step_in: str | None = None,
+        version_in: str | None = ":last",
+        file_name_in: str | None = ":default",
+        method_out: str | object | None = ":auto",
+        root_out: str | None = ":default",
+        attrs_out: str | list[str] | None = ":default",
+        step_out: str | None = None,
+        version_out: str | None = DEFAULT_DATE_VERSION_FORMAT,
+        file_name_out: str | None = ":default",
+    ):
+        self._root = root
+        self._attrs = attrs
+        self._file_name = file_name
+
+        self._method_in = method_in
+        self._root_in = root_in
+        self._attrs_in = attrs_in
+        self._step_in = step_in
+        self._version_in = version_in
+        self._file_name_in = file_name_in
+
+        self._method_out = method_out
+        self._root_out = root_out
+        self._attrs_out = attrs_out
+        self._step_out = step_out
+        self._version_out = version_out
+        self._file_name_out = file_name_out
 
     def var(self, key, value, force=False):
         env_var = self.env.var(key)
@@ -203,6 +251,60 @@ class Step(ModuleType):
         """
         self.doc.document(col, name, in_cols=in_cols, alias=alias)
 
+    def create_col(self, col, comment: str = NO_DETAILS, alias: str = None):
+        """
+        syntactic sugar to document a column creation
+        """
+        self.doc.document(col, name=CREATE + comment, alias=alias, in_cols=[])
+
+    def import_col(self, col, comment: str = NO_DETAILS, alias: str = None):
+        """
+        syntactic sugar to document a column import
+        """
+        self.doc.document(col, name=IMPORT + comment, alias=alias, in_cols=[])
+
+    def drop_col(self, col, comment: str = NO_DETAILS, alias: str = None):
+        """
+        syntactic sugar to document a column drop
+        """
+        self.doc.document(col, name=DROP + comment, alias=alias, in_cols=[])
+
+    def col_origin_name(
+        self,
+        col: str,
+        origin_name: str,
+        in_cols: str | Iterable | Literal[":auto"] = ":auto",
+        alias: str | None = None,
+    ):
+        """
+        :param col:
+        :param origin_name:
+        :param in_cols: default to the same as col
+        :param alias:
+        :return:
+        """
+        if in_cols == ":auto":
+            in_cols = col
+        self.doc.document(col, ORIGIN_NAME + origin_name, in_cols=in_cols, alias=alias)
+
+    def col_origin_path(
+        self,
+        col: str,
+        origin_path: str,
+        in_cols: str | Iterable | Literal[":auto"] = ":auto",
+        alias: str | None = None,
+    ):
+        """
+        :param col:
+        :param origin_path:
+        :param in_cols: default to the same as col
+        :param alias:
+        :return:
+        """
+        if in_cols == ":auto":
+            in_cols = col
+        self.doc.document(col, ORIGIN_PATH + origin_path, in_cols=in_cols, alias=alias)
+
     def cols_step(
         self, cols: list, col_step: str, input_cols: pd.Index | pd.Series | list | str | None = None
     ):
@@ -221,14 +323,11 @@ class Step(ModuleType):
             return col_steps
         return filter_list(col_steps, starts_with)
 
-    def get_origins_raw(self, col: str, alias: str):
-        return self.get_doc(col, alias, "origin: ")
+    def get_origin_names_raw(self, col: str, alias: str):
+        return self.get_doc(col, alias, ORIGIN_NAME)
 
-    def get_origins(self, col: str, alias: str):
-        return nested_replace(flatten(self.get_doc(col, alias, "origin: ")), "origin: ", "")
-
-    def col_origin(self, col, col_origin, in_cols=None, alias: str = None):
-        self.doc.document(col, f"origin: {col_origin}", in_cols=in_cols or [col], alias=alias)
+    def get_origin_names(self, col: str, alias: str):
+        return nested_replace(flatten(self.get_doc(col, alias, ORIGIN_NAME)), ORIGIN_NAME, "")
 
     def load(
         self,
@@ -259,10 +358,7 @@ class Step(ModuleType):
         :return:
         """
         original_logger_level = logger.level
-        if verbose:
-            logger.setLevel(logging.INFO)
-        else:
-            logger.setLevel(logging.WARNING)
+        logger.setLevel(logging.INFO if verbose else logging.WARNING)
 
         # DEBUG prints
         caller_file_name, caller_function, caller_package = get_caller_metadata()
@@ -311,20 +407,20 @@ class Step(ModuleType):
         previous_step: Step = Step._from_path(path)
 
         def fake_step():
-            previous_step = Step()
-            previous_step.md_all_files = [FileMetaData.from_data(path, data)]
-            for md in previous_step.md_all_files:
-                previous_step.doc.set_dataframe(
+            previous_step_ = Step()
+            previous_step_.md_all_files = [FileMetaData.from_data(path, data)]
+            for md in previous_step_.md_all_files:
+                previous_step_.doc.set_dataframe(
                     columns=[c["name"] for c in md.columns],
                     col_steps=md.col_steps,
                     alias="tmp",
                 )
-            return previous_step
+            return previous_step_
 
         def update_current_step_with_previous_step(previous_step_):
-            file_md: FileMetaData = get_file_md(previous_step_.md_all_files, path)
-            if file_md:
-                input_files = previous_step_._files_needed_to_gen([file_md]) + [file_md]
+            file_md_: FileMetaData = get_file_md(previous_step_.md_all_files, path)
+            if file_md_:
+                input_files_ = previous_step_._files_needed_to_gen([file_md_]) + [file_md_]
             else:  # The file is not in the metadata file
                 warnings.warn(
                     f"metadata file found but file {path.full_path} not present in it."
@@ -334,7 +430,7 @@ class Step(ModuleType):
                     category=UserWarning,
                 )
                 return None, None
-            return file_md, input_files
+            return file_md_, input_files_
 
         file_md: FileMetaData = None
         input_files = None
@@ -398,10 +494,7 @@ class Step(ModuleType):
         :return:
         """
         original_logger_level = logger.level
-        if verbose:
-            logger.setLevel(logging.INFO)
-        else:
-            logger.setLevel(logging.WARNING)
+        logger.setLevel(logging.INFO if verbose else logging.WARNING)
 
         # if arguments are None, use step level arguments
         root = get_arg_value(get_arg_value(root, self._root_out), self._root)
@@ -413,11 +506,6 @@ class Step(ModuleType):
 
         if Strftime.__call__(version):
             version = datetime.now().strftime(version)
-
-        # if self.env.running() and root is None:
-        #     raise ValueError("root is None. Must be set when running from pipeline")
-        # if root is not None:
-        #     root = self.env.get_adjusted_worker_path(root)
 
         if file == ":auto":
             # Use the same file name as the one use to create it
@@ -460,8 +548,6 @@ class Step(ModuleType):
 
         self.columns_documentation(alias, data, path, saved_file_md)
 
-        # FIXME step col should be at file level
-
         self.md_all_files.append(saved_file_md)
 
         # export metadata file
@@ -471,6 +557,7 @@ class Step(ModuleType):
         if export_viz_tool:
             logger.info(f"Exporting viz tool to {path.dir_path}")
             export_viz_html(path.metadata_path, path.dir_path)
+
         logger.setLevel(original_logger_level)
 
         return path
@@ -510,30 +597,14 @@ class Step(ModuleType):
         if alias is not None:
             saved_file_md.col_steps = self.doc.metadata(data, alias)
 
-    def reset(self):  # TODO
+    def reset(self):
         # === Exported === #
         self.md_all_files: list[FileMetaData] = []
         self.md_direct_input_files: list[FileMetaData] = []  # direct input to this step file
         # ================ #
 
         # Default values of load and save functions
-        self._step_in: str | None = None
-        self._version_in: str | None = ":last"
-        self._attrs_in: str | list[str] | None = ":default"
-        self._file_name_in: str | None = ":default"  # TODO
-        self._method_in: str | object | None = ":auto"  # TODO
-        self._root_in: str | None = ":default"
-
-        self._step_out: str | None = None
-        self._version_out: str | None = DEFAULT_DATE_VERSION_FORMAT
-        self._attrs_out: str | list[str] | None = ":default"
-        self._file_name_out: str | None = ":default"  # TODO
-        self._method_out: str | object | None = ":auto"
-        self._root_out: str | None = ":default"
-
-        self._root: str | None = "./data"
-        self._file_name: str | None = ":auto"  # TODO
-        self._attrs: str | list[str] | None = None
+        self.set_defaults()
 
         # reset documentation
         self.doc.reset()

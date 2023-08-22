@@ -3,21 +3,23 @@ from __future__ import annotations
 from stdflow.stdflow_path.data_path import DataPath
 
 # isort: off
-from stdflow.step import Step  # Used by user
-from stdflow.step_runner import StepRunner  # Used by user
-from stdflow.pipeline import Pipeline  # Used by user
-from stdflow.stdflow_doc.documenter import IMPORTED
+# -> Following is used by end user
+from stdflow.dataframe_ext import pandas_document
+from stdflow.step import Step
+from stdflow.step_runner import StepRunner
+from stdflow.pipeline import Pipeline
+from stdflow.stdflow_doc.documenter import IMPORT, CREATE, DROP, ORIGIN_NAME, ORIGIN_PATH, NO_DETAILS
 
 # isort: on
 
 try:
-    from typing import Any, Literal, Optional, Tuple, Union
+    from typing import Any, Literal, Optional, Tuple, Union, Iterable
 except ImportError:
     from typing_extensions import Literal, Optional, Union, Tuple, Any
 
 import pandas as pd
 
-__version__ = "0.0.54"
+__version__ = "0.0.56"
 
 import logging
 import sys
@@ -27,6 +29,8 @@ from stdflow.step import GStep
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
+
+
 
 
 class Module(object):
@@ -237,19 +241,79 @@ class Module(object):
         in_cols: pd.Index | pd.Series | list | str | None = None,
         alias: str = None,
     ):
+        """
+        syntactic sugar to document a column
+        """
         return self.step.col_step(col, name, in_cols=in_cols, alias=alias)
+
+    def create_col(self, col, comment: str = NO_DETAILS, alias: str = None):
+        """
+        syntactic sugar to document a column creation
+        """
+        return self.step.create_col(col, comment=comment, alias=alias)
+
+    def import_col(self, col, comment: str = NO_DETAILS, alias: str = None):
+        """
+        syntactic sugar to document a column import
+        """
+        return self.step.import_col(col, comment=comment, alias=alias)
+
+    def drop_col(self, col, comment: str = NO_DETAILS, alias: str = None):
+        """
+        syntactic sugar to document a column drop
+        """
+        return self.step.drop_col(col, comment=comment, alias=alias)
+
+    def col_origin_name(
+        self,
+        col: str,
+        origin_name: str,
+        in_cols: str | Iterable | Literal[":auto"] = ":auto",
+        alias: str | None = None,
+    ):
+        """
+        :param col:
+        :param origin_name:
+        :param in_cols: default to the same as col
+        :param alias:
+        :return:
+        """
+        return self.step.col_origin_name(col, origin_name, in_cols=in_cols, alias=alias)
+
+    def col_origin_path(
+        self,
+        col: str,
+        origin_path: str,
+        in_cols: str | Iterable | Literal[":auto"] = ":auto",
+        alias: str | None = None,
+    ):
+        """
+        :param col:
+        :param origin_path:
+        :param in_cols: default to the same as col
+        :param alias:
+        :return:
+        """
+        return self.step.col_origin_path(col, origin_path, in_cols=in_cols, alias=alias)
+
+    def cols_step(
+        self, cols: list, col_step: str, input_cols: pd.Index | pd.Series | list | str | None = None
+    ):
+        return self.step.cols_step(cols, col_step, in_cols=input_cols)
+
+    def cols_steps(
+        self, cols_steps: dict, input_cols: pd.Index | pd.Series | list | str | None = None
+    ):
+        return self.step.cols_steps(cols_steps, in_cols=input_cols)
 
     def get_doc(self, col: str, alias: str | None = None, starts_with: str | None = None):
         return self.step.get_doc(col, alias=alias, starts_with=starts_with)
 
-    def get_origins_raw(self, col, alias):
-        return self.step.get_origins_raw(col, alias)
+    def get_origin_names_raw(self, col: str, alias: str):
+        return self.step.get_origin_names_raw(col, alias)
 
-    def get_origins(self, col, alias):
-        return self.step.get_origins(col, alias)
-
-    def col_origin(self, col, col_origin, input_cols=None):
-        return self.step.col_origin(col, col_origin, input_cols)
+    def get_origin_names(self, col: str, alias: str):
+        return self.step.get_origin_names(col, alias)
 
 
 if __name__ == "__main__":  # test if run as a script
@@ -466,10 +530,79 @@ def var(key, value, force=False):
 
 
 def col_step(
+
     col: str,
     name: str,
     in_cols: pd.Index | pd.Series | list | str | None = None,
     alias: str = None,
+):
+    """
+    syntactic sugar to document a column
+    """
+    ...
+
+
+def create_col(self, col, comment: str = NO_DETAILS, alias: str = None):
+    """
+    syntactic sugar to document a column creation
+    """
+    ...
+
+
+def import_col(self, col, comment: str = NO_DETAILS, alias: str = None):
+    """
+    syntactic sugar to document a column import
+    """
+    ...
+
+
+def drop_col(self, col, comment: str = NO_DETAILS, alias: str = None):
+    """
+    syntactic sugar to document a column drop
+    """
+    ...
+
+
+def col_origin_name(
+
+    col: str,
+    origin_name: str,
+    in_cols: str | Iterable | Literal[":auto"] = ":auto",
+    alias: str | None = None,
+):
+    """
+    :param col:
+    :param origin_name:
+    :param in_cols: default to the same as col
+    :param alias:
+    """
+    ...
+
+
+def col_origin_path(
+
+    col: str,
+    origin_path: str,
+    in_cols: str | Iterable | Literal[":auto"] = ":auto",
+    alias: str | None = None,
+):
+    """
+    :param col:
+    :param origin_path:
+    :param in_cols: default to the same as col
+    :param alias:
+    """
+    ...
+
+
+def cols_step(
+    cols: list, col_step: str, input_cols: pd.Index | pd.Series | list | str | None = None
+):
+    ...
+
+
+def cols_steps(
+    cols_steps: dict, input_cols: pd.Index | pd.Series | list | str | None = None
 ):
     ...
 
@@ -478,13 +611,9 @@ def get_doc(col: str, alias: str | None = None, starts_with: str | None = None):
     ...
 
 
-def get_origins_raw(col, alias):
+def get_origin_names_raw(col: str, alias: str):
     ...
 
 
-def get_origins(col, alias):
-    ...
-
-
-def col_origin(col, col_origin):
+def get_origin_names(col: str, alias: str):
     ...
