@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from stdflow import Step
-from stdflow.stdflow_doc.documenter import DROPPED
+from stdflow.stdflow_doc.documenter import DROPPED, IMPORTED
 
 
 def setup():
@@ -24,8 +24,8 @@ def setup():
     os.makedirs("./data/test/step_raw/", exist_ok=True)
 
     # Save datasets to paths
-    df1.to_csv("./data/test/step_raw/basic_data.csv")
-    df2.to_csv("./data/test/step_raw/advanced_data.csv")
+    df1.to_csv("./data/test/step_raw/basic_data.csv", index=False)
+    df2.to_csv("./data/test/step_raw/advanced_data.csv", index=False)
 
 
 def test_basic_documentation():
@@ -191,6 +191,37 @@ def test_split():
 
     step.save(split1, file_name="split1.csv", version=None, alias="split1")
     step.save(split2, file_name="split2.csv", version=None, alias="split2")
+
+
+def test_split_2():
+    import stdflow as sf
+    setup()
+    sf.reset()
+    sf.root = "./data"
+    sf.attrs = ["test"]
+    sf.step_in = "raw"
+    sf.step_out = "processed"
+    df = sf.load(file_name="basic_data.csv", version=None, alias="basic_data")
+
+    for col in set(df.columns):
+        sf.col_step(f"base::{col}", IMPORTED, [])
+        assert sf.get_doc(f"base::{col}") == [IMPORTED]
+        sf.col_origin(f"base::{col}", "CMI Offline Sales")
+        sf.col_step(f"indo::{col}", "country: indonesia", [f"base::{col}"])
+        sf.col_step(f"india::{col}", "country: india", [f"base::{col}"])
+
+        assert sf.get_doc(f"india::{col}") == ['Imported', 'origin: CMI Offline Sales', 'country: india']
+        assert sf.get_doc(f"indo::{col}") == ['Imported', 'origin: CMI Offline Sales', 'country: indonesia']
+
+    sf.save(df, file_name="basic_data_indo.csv", version=None, alias="indo")  # TODO check behavior if saving with same file name and loading
+    sf.save(df, file_name="basic_data_india.csv", version=None, alias="india")
+
+    sf.reset()
+    sf.root = "./data"
+    sf.attrs = ["test"]
+    sf.step_in = "processed"
+    df_indo = sf.load(file_name="basic_data_indo.csv", version=None, alias="indo")
+    assert sf.get_doc(f"indo::A") == ['Imported', 'origin: CMI Offline Sales', 'country: indonesia']
 
 
 def test_rename():

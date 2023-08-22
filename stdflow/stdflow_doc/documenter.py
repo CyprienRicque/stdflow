@@ -213,16 +213,24 @@ class Documenter:
         for col in missing_cols:
             self(f"{alias}{splitter}{col}", IMPORTED, [])
         # End add missing cols
+
         if alias not in self.input_df_alias_to_cols:
             self.input_df_alias_to_cols[alias] = columns
         else:
-            if len(set(self.input_df_alias_to_cols[alias] + columns)) != len(
-                self.input_df_alias_to_cols[alias] + columns
-            ):
+            all_cols = self.input_df_alias_to_cols[alias] + columns
+            if len(set(all_cols)) != len(all_cols):
                 duplicated_cols = [
                     col for col in columns if col in self.input_df_alias_to_cols[alias]
                 ]
-                logger.warning(f"Columns {duplicated_cols} are duplicated in dataframe {alias}.")
+                logger.warning(
+                    f"Columns {duplicated_cols} are duplicated in dataframe {alias}."
+                )  # FIXME this can print empty cols
+                if len(duplicated_cols) == 0:
+                    logger.error(
+                        f"INTERNAL ERROR please report to the developer."
+                        f"{set(all_cols)} != {all_cols}"
+                    )
+
             self.input_df_alias_to_cols[alias] += columns
 
     def _add_steps_from_metadata(self, col_steps: List[dict], alias):
@@ -453,6 +461,10 @@ class Documenter:
         :param include_dropped: if True, include dropped steps in the documentation
         :return:
         """
+        if splitter in col_name and df_alias is not None:
+            raise ValueError("Specify alias either in col_name with '::' or in df_alias.")
+        if splitter in col_name:
+            df_alias, col_name = col_name.split(splitter)
         step = self.find_advanced_col_step(col_name, df_alias, include_dropped)
         if isinstance(step, list):
             raise ValueError(f"Column '{col_name}' is ambiguous. Found: {step}")

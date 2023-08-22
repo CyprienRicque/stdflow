@@ -470,12 +470,12 @@ class Step(ModuleType):
                     raise ValueError(
                         f":auto takes the file name of the data source used to create the file."
                         f"Multiple data sources detected: {self.md_direct_input_files}"
-                        f"Use file_name argument to specify the file name."
+                        f"Use alias argument to specify the alias."
                     )
 
                 saved_file_md.col_steps = self.doc.metadata(data, alias)
-            except ValueError:
-                logger.warning("auto saving of columns documentation failed.")
+            except ValueError as e:
+                logger.warning(f"auto saving of columns documentation failed. {e}")
 
         # FIXME step col should be at file level
 
