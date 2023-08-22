@@ -416,7 +416,7 @@ class Documenter:
 
     def find_advanced_col_step(
         self, col_name, df_alias: None | str, include_dropped=False
-    ) -> None | List[ColStep] | ColStep:
+    ) -> None | ColStep:
         """
         Return the documented step that generated a column.
         :param col_name:
@@ -438,8 +438,8 @@ class Documenter:
             return None
 
         if len(matching_steps) > 1:
-            logger.error(f"Column '{col_name}' is ambiguous. Found: {matching_steps}")
-            return matching_steps
+            # logger.error(f"Column '{col_name}' is ambiguous. Found: {matching_steps}")
+            raise ValueError(f"Column '{col_name}' is ambiguous. Found: {matching_steps}")
 
         return matching_steps[0]
 

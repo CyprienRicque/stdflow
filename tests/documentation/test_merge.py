@@ -226,11 +226,11 @@ def test_auto_propagation():
 
     step = Step(root="./data", attrs=["test"], step_in="processed", step_out="processed_2")
 
-    df_basic = step.load(file_name="data.csv")
-    df_advanced = step.load(file_name="adv.csv")
+    df_basic = step.load(file_name="data.csv", alias=None)
+    df_advanced = step.load(file_name="adv.csv", alias=None)
 
-    step.save(df_basic, file_name="data.csv", index=False)
-    step.save(df_advanced, file_name="adv.csv", index=False)
+    step.save(df_basic, file_name="data.csv", index=False, alias=None)
+    step.save(df_advanced, file_name="adv.csv", index=False, alias=None)
 
     # Step 3
 
@@ -274,9 +274,9 @@ def test_auto_propagation2():
 
     step = Step(root="./data", attrs=["test"], step_in="processed", step_out="processed_2")
 
-    df_basic = step.load(file_name="data.csv")
+    df_basic = step.load(file_name="data.csv", alias=None)
 
-    step.save(df_basic, file_name="data2.csv", index=False)
+    step.save(df_basic, file_name="data2.csv", index=False, alias=None)
 
     # Step 3
 

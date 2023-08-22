@@ -19,7 +19,7 @@ except ImportError:
 
 import pandas as pd
 
-__version__ = "0.0.56"
+__version__ = "0.0.58"
 
 import logging
 import sys
@@ -580,7 +580,6 @@ def col_origin_name(
 
 
 def col_origin_path(
-
     col: str,
     origin_path: str,
     in_cols: str | Iterable | Literal[":auto"] = ":auto",

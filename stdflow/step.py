@@ -473,7 +473,7 @@ class Step(ModuleType):
         version: str | None | Literal[":default"] | Strftime = ":default",
         file_name: str | Literal[":default", ":auto"] = ":default",
         method: str | object | Literal[":default", ":auto"] = ":default",
-        alias: str = None,
+        alias: str = ":ignore",
         export_viz_tool: bool = False,
         verbose: bool = False,
         **kwargs,
@@ -523,6 +523,7 @@ class Step(ModuleType):
                     f":auto takes the file name of the data source used to create the file."
                     f"No data source detected. Use file_name argument to specify the file name."
                 )
+
         path: DataPath = DataPath.from_input_params(root, attrs, step, version, file)
         if not path.file_name:
             raise ValueError(f"file_name is None. path: {path}")
@@ -546,7 +547,8 @@ class Step(ModuleType):
             path, data, method.__str__(), self.md_direct_input_files
         )
 
-        self.columns_documentation(alias, data, path, saved_file_md)
+        if alias != ":ignore":
+            self.columns_documentation(alias, data, path, saved_file_md)
 
         self.md_all_files.append(saved_file_md)
 
@@ -591,7 +593,7 @@ class Step(ModuleType):
                     f"Could not auto save cols documentation:"
                     f":auto takes the file name of the data source used to create the file.\n"
                     f"Multiple data sources detected: {self.md_direct_input_files}\n"
-                    f"Use alias argument to specify the datasource to use."
+                    f"Use alias argument to specify the datasource to use. or set alias=':ignore'"
                 )
 
         if alias is not None:
