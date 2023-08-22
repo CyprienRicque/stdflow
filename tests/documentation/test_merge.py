@@ -161,7 +161,7 @@ def test_merge_same_alias_same_data():
     step.col_step("data::A", "Added A to B", ["data::B", "data::A"])
 
     df_advanced["A"] = df_advanced["A"].astype(int)
-    step.col_step("adv::A", "Converted to int", ["adv::A"])
+    step.col_step("A", "Converted to int", ["A"], alias='adv')
 
     assert step.doc.get_documentation("A", "data") == [["Imported"], ["Imported"], "Added A to B"]
     assert step.doc.get_documentation("B", "data") == ["Imported"]

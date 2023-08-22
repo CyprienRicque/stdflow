@@ -17,7 +17,7 @@ except ImportError:
     from typing_extensions import Literal, Optional
 
 from stdflow.config import STEP_PREFIX, VERSION_PREFIX
-from stdflow.stdflow_utils import detect_folders, fstep, fv
+from stdflow.stdflow_utils import detect_folders, fstep, fv, path_to_str, str_to_path
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -59,6 +59,8 @@ class DataPath(Path):
             if not os.path.isdir(self.dir_path):
                 logger.error(f"Path {self.dir_path} does not exist")
             self.version = self.detect_version(self.dir_path, version)
+        elif version is not None and version.startswith(VERSION_PREFIX):
+            self.version = version[len(VERSION_PREFIX):]
         elif version is not None:
             self.version = version
 
@@ -106,6 +108,16 @@ class DataPath(Path):
             return versions[0] if versions else None
 
         return None
+
+    def __str__(self):
+        return path_to_str(self.attrs, self.step_name, self.version, self.file_name)
+
+    def __repr__(self):
+        return self.__str__()
+
+    @classmethod
+    def from_str(cls, path_str):
+        return cls(**str_to_path(path_str))
 
     @property
     def full_path(self):
@@ -189,6 +201,14 @@ class DataPath(Path):
             version=version,
             file_name=file_name,
             glob=glob,
+        )
+
+    def __eq__(self, other):
+        return (
+            self.attrs == other.attrs
+            and self.step_name == other.step_name
+            and self.version == other.version
+            and self.file_name == other.file_name
         )
 
 

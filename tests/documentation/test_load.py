@@ -207,13 +207,13 @@ def test_split_2():
         sf.col_step(f"base::{col}", IMPORTED, [])
         assert sf.get_doc(f"base::{col}") == [IMPORTED]
         sf.col_origin(f"base::{col}", "CMI Offline Sales")
-        sf.col_step(f"indo::{col}", "country: indonesia", [f"base::{col}"])
-        sf.col_step(f"india::{col}", "country: india", [f"base::{col}"])
+        sf.col_step(f"indo::{col}", "country: indonesia", in_cols=[f"base::{col}"])
+        sf.col_step(f"india::{col}", "country: india", in_cols=[f"base::{col}"])
 
         assert sf.get_doc(f"india::{col}") == ['Imported', 'origin: CMI Offline Sales', 'country: india']
         assert sf.get_doc(f"indo::{col}") == ['Imported', 'origin: CMI Offline Sales', 'country: indonesia']
 
-    sf.save(df, file_name="basic_data_indo.csv", version=None, alias="indo")  # TODO check behavior if saving with same file name and loading
+    sf.save(df, file_name="basic_data_indo.csv", version=None, alias="indo")  # TODO check behavior if saving twice with same file name and loading and getting documentation
     sf.save(df, file_name="basic_data_india.csv", version=None, alias="india")
 
     sf.reset()
@@ -235,7 +235,7 @@ def test_rename():
     with pytest.raises(ValueError):
         step.col_origin("basic_data::A_renamed", "Renamed column A.")
 
-    step.col_origin("A_renamed", "test", input_cols="A")
+    step.col_origin("A_renamed", "test", in_cols="A")
     step.col_origin("A_renamed", "test2", ["A_renamed"])
     step.col_origin("A_renamed", "test3", "A_renamed")
     step.col_origin("A_renamed", "test4")

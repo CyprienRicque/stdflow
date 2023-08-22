@@ -5,7 +5,7 @@ import json
 import logging
 import uuid
 import warnings
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Iterable
 
 import pandas as pd
 
@@ -64,6 +64,8 @@ class ColStep:
 
 
 def to_list(x: Any) -> Any:
+    if x is None:
+        return []
     # Convert pd types to list
     if isinstance(x, pd.Index):
         x = x.tolist()
@@ -80,16 +82,25 @@ class Documenter:
         self.dict_step: Dict[str, ColStep] = {}
         self._step_list: List[ColStep] = []
 
-    def document(self, col, col_step, input_cols: list | str, current_step=True):
-        input_cols = to_list(input_cols)
-        if not isinstance(input_cols, list):
+    def document(self, col, col_step, *, in_cols: Iterable | str = None, alias: str = None, current_step=True):
+        """
+
+        :param col: column name to document
+        :param col_step: documentation of the step
+        :param in_cols: input columns to the current one
+        :param alias: alias of the dataframe of the column (overwritten if col is of the form alias::col)
+        :param current_step: False means the step was imported
+        :return:
+        """
+        in_cols = to_list(in_cols)
+        if not isinstance(in_cols, list):
             warnings.warn(
-                f"input cols is not a list. type: {type(input_cols)}",
+                f"input cols is not a list. type: {type(in_cols)}",
                 category=UserWarning,
             )
 
-        input_cols_with_ids = self._get_input_cols_details(input_cols)
-        alias, col = self._get_output_col_details(col, input_cols_with_ids)
+        input_cols_with_ids = self._get_input_cols_details(in_cols=in_cols, alias=alias)
+        alias, col = self._infer_out_col_details(col, in_cols=input_cols_with_ids, alias=alias)
 
         input_steps = [
             self.find_advanced_col_step(col_name, df_alias)
@@ -98,7 +109,7 @@ class Documenter:
         # if one of the step is None, raise an error
         if None in input_steps:
             raise ValueError(
-                f"Column {col} has no documented origin. This column was in the input cols: {input_cols}."
+                f"Column {col} has no documented origin. This column was in the input cols: {in_cols}."
                 f"You may have specified it or it is the default value"
                 f"If you are trying to document a column that does"
                 f"if the input col is not correct, specify it with input_cols=[df_alias::col_name, ...]"
@@ -115,8 +126,8 @@ class Documenter:
         )
         self._add_step(step)
 
-    def __call__(self, col, col_step, input_cols: list, current_step=True):
-        self.document(col, col_step, input_cols, current_step)
+    def __call__(self, col, col_step, in_cols: list = None, alias: str = None, current_step=True):
+        self.document(col, col_step, in_cols=in_cols, alias=alias, current_step=current_step)
 
     def _add_step(self, step: ColStep):
         # TODO double check why this work? uuid from new step can be the same as the one of a previously created one?
@@ -170,30 +181,34 @@ class Documenter:
                 return alias
         raise ValueError(f"Could not infer alias from column '{col}'.")
 
-    def _get_output_col_details(
-        self, col: str, input_cols: list[tuple[str, str]]
+    def _infer_out_col_details(
+        self, col: str, in_cols: list[tuple[str, str]], alias: str
     ) -> Tuple[str, str]:
         # if not alias in out col, infer it from input cols
-        if splitter not in col:
-            alias: str = input_cols[0][0]
+        if splitter in col:
+            alias, col = col.split(splitter)
+        elif splitter not in col and alias is not None:
+            col, alias = col, alias
+        elif splitter not in col and alias is None:
+            alias: str = in_cols[0][0]
             return alias, col
         # pydantic assert if tuple(col.split(splitter)) is not type Tuple[str, str] TODO
+        return alias, col
 
-        return tuple(col.split(splitter))
-
-    def _get_input_cols_details(self, input_cols) -> List[Tuple[str, str]]:
+    def _get_input_cols_details(self, in_cols, alias: str) -> List[Tuple[str, str]]:
         input_cols_with_ids = []
-        for input_col in input_cols:
+        for input_col in in_cols:
             if splitter in input_col:
                 df_alias, col_name = input_col.split(splitter)
             else:
                 col_name = input_col
                 df_alias = self._infer_dataframe_alias_from_col_steps(col_name)
 
+            if isinstance(df_alias, list) and alias in df_alias:
+                df_alias = alias
+
             if not isinstance(df_alias, str):
-                raise ValueError(
-                    f"Column '{col_name}' is ambiguous. Please specify the dataframe name."
-                )
+                raise ValueError(f"Column '{col_name}' is ambiguous. Please specify the dataframe name.")
 
             input_cols_with_ids.append((df_alias, col_name))
         return input_cols_with_ids
@@ -239,7 +254,7 @@ class Documenter:
             step["alias"] = alias
             self._add_step(ColStep.from_dict(step))
 
-    def _infer_dataframe_alias_from_col_steps(self, col_name):
+    def _infer_dataframe_alias_from_col_steps(self, col_name) -> str | None | list[str]:
         """
         Find the highest steps with col_name and return the alias.
         :param col_name:
@@ -255,8 +270,7 @@ class Documenter:
             return None
 
         if len(matching_steps) > 1:
-            logger.error(f"Column '{col_name}' is ambiguous. Found: {matching_steps}")
-            return matching_steps
+            return [m.alias for m in matching_steps]
 
         return matching_steps[0].alias
 

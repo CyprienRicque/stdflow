@@ -128,6 +128,24 @@ def string_to_uuid(input_string):
     return uuid.uuid5(uuid.NAMESPACE_DNS, input_string)
 
 
+def path_to_str(attrs, step_name, version, file_name):
+    return "::".join([f"attrs={attrs}", f"step_name={step_name}", f"version={version}", f"file_name={file_name}"])
+
+
+def str_to_path(s):
+    d = dict(
+        attrs=s.split("::")[0].split("attrs=")[1],
+        step_name=s.split("::")[1].split("step_name=")[1],
+        version=s.split("::")[2].split("version=")[1],
+        file_name=s.split("::")[3].split("file_name=")[1],
+    )
+    # convert "None" to None
+    for k, v in d.items():
+        if v == "None":
+            d[k] = None
+    return d
+
+
 #     # Write output to HTML file
 #     with open(os.path.join(dest, "pipeline.html"), "w") as html_file:
 #         # html_file.write(output)

@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+from stdflow.stdflow_path.data_path import DataPath
+
 # isort: off
 from stdflow.step import Step  # Used by user
 from stdflow.step_runner import StepRunner  # Used by user
 from stdflow.pipeline import Pipeline  # Used by user
+from stdflow.stdflow_doc.documenter import IMPORTED
+
 # isort: on
 
 try:
@@ -205,7 +209,7 @@ class Module(object):
         export_viz_tool: bool = False,
         verbose: bool = False,
         **kwargs,
-    ):
+    ) -> DataPath:
         return self.step.save(
             data,
             root=root,
@@ -226,8 +230,14 @@ class Module(object):
     def var(self, key, value, force=False):
         return self.step.var(key, value, force=force)
 
-    def col_step(self, col, col_step, input_cols=None):
-        return self.step.col_step(col, col_step, input_cols=input_cols)
+    def col_step(
+        self,
+        col: str,
+        name: str,
+        in_cols: pd.Index | pd.Series | list | str | None = None,
+        alias: str = None,
+    ):
+        return self.step.col_step(col, name, in_cols=in_cols, alias=alias)
 
     def get_doc(self, col: str, alias: str | None = None, starts_with: str | None = None):
         return self.step.get_doc(col, alias=alias, starts_with=starts_with)
@@ -443,7 +453,7 @@ def save(
     export_viz_tool: bool = False,
     verbose: bool = False,
     **kwargs,
-):
+) -> DataPath:
     ...
 
 
@@ -455,7 +465,12 @@ def var(key, value, force=False):
     ...
 
 
-def col_step(col, col_step, input_cols=None):
+def col_step(
+    col: str,
+    name: str,
+    in_cols: pd.Index | pd.Series | list | str | None = None,
+    alias: str = None,
+):
     ...
 
 

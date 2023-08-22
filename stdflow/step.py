@@ -193,12 +193,27 @@ class Step(ModuleType):
 
     def col_step(
         self,
-        col,
-        col_step,
-        input_cols: pd.Index | pd.Series | list | str | None = None,
+        col: str,
+        name: str,
+        in_cols: pd.Index | pd.Series | list | str | None = None,
+        alias: str = None,
     ):
-        input_cols = input_cols if input_cols is not None else []
-        self.doc.document(col, col_step, input_cols)
+        """
+        syntactic sugar to document a column
+        """
+        self.doc.document(col, name, in_cols=in_cols, alias=alias)
+
+    def cols_step(
+        self, cols: list, col_step: str, input_cols: pd.Index | pd.Series | list | str | None = None
+    ):
+        for col in cols:
+            self.col_step(col, col_step, in_cols=input_cols)
+
+    def cols_steps(
+        self, cols_steps: dict, input_cols: pd.Index | pd.Series | list | str | None = None
+    ):
+        for col, col_step in cols_steps.items():
+            self.col_step(col, col_step, in_cols=input_cols)
 
     def get_doc(self, col: str, alias: str | None = None, starts_with: str | None = None):
         col_steps = self.doc.get_documentation(col, alias)
@@ -206,14 +221,14 @@ class Step(ModuleType):
             return col_steps
         return filter_list(col_steps, starts_with)
 
-    def get_origins_raw(self, col, alias):
+    def get_origins_raw(self, col: str, alias: str):
         return self.get_doc(col, alias, "origin: ")
 
-    def get_origins(self, col, alias):
+    def get_origins(self, col: str, alias: str):
         return nested_replace(flatten(self.get_doc(col, alias, "origin: ")), "origin: ", "")
 
-    def col_origin(self, col, col_origin, input_cols=None):
-        self.doc.document(col, f"origin: {col_origin}", input_cols or [col])
+    def col_origin(self, col, col_origin, in_cols=None, alias: str = None):
+        self.doc.document(col, f"origin: {col_origin}", in_cols=in_cols or [col], alias=alias)
 
     def load(
         self,
@@ -366,7 +381,7 @@ class Step(ModuleType):
         export_viz_tool: bool = False,
         verbose: bool = False,
         **kwargs,
-    ):
+    ) -> DataPath:
         """
         :param data: data to save
         :param root: first part of the path to the root data folder that is not to export in metadata
@@ -376,7 +391,7 @@ class Step(ModuleType):
         :param step: step
         :param version: last part of the full_path. one of [strftime str, "<version_name>", None]
         :param file_name: file name
-        :param alias: alias of the dataset to document it and its columns
+        :param alias: alias of the dataset to document it and its columns. ignore if alias == ":ignore"
         :param export_viz_tool: if True, export html view of the data and the pipeline it comes from
         :param verbose:
         :param kwargs: kwargs to send to the method
@@ -411,8 +426,8 @@ class Step(ModuleType):
                 file = self.md_direct_input_files[0].path.file_name
             elif len(self.md_direct_input_files) > 1:
                 raise ValueError(
-                    f":auto takes the file name of the data source used to create the file."
-                    f"Multiple data sources detected: {self.md_direct_input_files}"
+                    f":auto takes the file name of the data source used to create the file.\n"
+                    f"Multiple data sources detected: {self.md_direct_input_files}\n"
                     f"Use file_name argument to specify the file name."
                 )
             else:
@@ -443,39 +458,7 @@ class Step(ModuleType):
             path, data, method.__str__(), self.md_direct_input_files
         )
 
-        # update col_steps in metadata from documentation
-        if alias is not None:
-            saved_file_md.col_steps = self.doc.metadata(
-                data, alias
-            )  # FIXME step col should be at file level
-
-        # automatic input file detection
-        if alias is None:
-            try:
-                # md_direct_input_files with same file name and attrs
-                input_file = [
-                    file
-                    for file in self.md_direct_input_files
-                    if file.path.attrs == path.attrs and file.path.file_name == path.file_name
-                ]
-
-                # find initial loaded file
-                if len(self.md_direct_input_files) == 1:
-                    alias = alias_from_file_metadata(self.md_direct_input_files[0])
-                elif len(input_file) == 1:
-                    alias = alias_from_file_metadata(input_file[0])
-                elif len(self.md_direct_input_files) == 0:
-                    alias = alias_from_file_metadata(saved_file_md)
-                else:
-                    raise ValueError(
-                        f":auto takes the file name of the data source used to create the file."
-                        f"Multiple data sources detected: {self.md_direct_input_files}"
-                        f"Use alias argument to specify the alias."
-                    )
-
-                saved_file_md.col_steps = self.doc.metadata(data, alias)
-            except ValueError as e:
-                logger.warning(f"auto saving of columns documentation failed. {e}")
+        self.columns_documentation(alias, data, path, saved_file_md)
 
         # FIXME step col should be at file level
 
@@ -489,6 +472,43 @@ class Step(ModuleType):
             logger.info(f"Exporting viz tool to {path.dir_path}")
             export_viz_html(path.metadata_path, path.dir_path)
         logger.setLevel(original_logger_level)
+
+        return path
+
+    def columns_documentation(
+        self, alias: str | None, data: Any, path: DataPath, saved_file_md: FileMetaData
+    ) -> None:
+        # FIXME step col should be at file level
+
+        if alias == ":ignore":
+            return
+
+        # automatic input file detection
+        if alias is None:
+            # md_direct_input_files with same file name and attrs
+            input_file = [
+                file
+                for file in self.md_direct_input_files
+                if file.path.attrs == path.attrs and file.path.file_name == path.file_name
+            ]
+
+            # find initial loaded file
+            if len(self.md_direct_input_files) == 1:
+                alias = alias_from_file_metadata(self.md_direct_input_files[0])
+            elif len(input_file) == 1:
+                alias = alias_from_file_metadata(input_file[0])
+            elif len(self.md_direct_input_files) == 0:
+                alias = alias_from_file_metadata(saved_file_md)
+            else:
+                logger.warning(
+                    f"Could not auto save cols documentation:"
+                    f":auto takes the file name of the data source used to create the file.\n"
+                    f"Multiple data sources detected: {self.md_direct_input_files}\n"
+                    f"Use alias argument to specify the datasource to use."
+                )
+
+        if alias is not None:
+            saved_file_md.col_steps = self.doc.metadata(data, alias)
 
     def reset(self):  # TODO
         # === Exported === #
