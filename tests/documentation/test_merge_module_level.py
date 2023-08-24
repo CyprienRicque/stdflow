@@ -67,7 +67,7 @@ def test_export_only():
     sf.step_in = "processed"
     sf.step_out = "processed_2"
 
-    sf.load(file_name="basic_data.csv", version=None)
+    sf.load(file_name="basic_data.csv", version=None, alias=None)
     assert sf.get_doc("A") == ["random_origin"]
 
 
@@ -308,11 +308,11 @@ def test_auto_propagation():
     sf.step_in = "processed"
     sf.step_out = "processed_2"
 
-    df_basic = sf.load(file_name="data.csv")
-    df_advanced = sf.load(file_name="adv.csv")
+    df_basic = sf.load(file_name="data.csv", alias=None)
+    df_advanced = sf.load(file_name="adv.csv", alias=None)
 
-    sf.save(df_basic, file_name="data.csv", index=False)
-    sf.save(df_advanced, file_name="adv.csv", index=False)
+    sf.save(df_basic, file_name="data.csv", index=False, alias=None)
+    sf.save(df_advanced, file_name="adv.csv", index=False, alias=None)
 
     # Step 3
 
@@ -334,8 +334,8 @@ def test_auto_propagation():
     assert sf.get_doc("D", "adv") == [IMPORT + NO_DETAILS, "Converted to int"]
     assert sf.get_doc("C", "adv") == [IMPORT + NO_DETAILS]
 
-    sf.save(df_basic, file_name="data.csv", index=False)
-    sf.save(df_advanced, file_name="adv.csv", index=False)
+    sf.save(df_basic, file_name="data.csv", index=False, alias=None)
+    sf.save(df_advanced, file_name="adv.csv", index=False, alias=None)
 
     # assert sf.get_doc("A", "data") == [[IMPORT + NO_DETAILS], [IMPORT + NO_DETAILS], 'Added A to B']
 
@@ -379,9 +379,9 @@ def test_auto_propagation2():
     sf.step_in = "processed"
     sf.step_out = "processed_2"
 
-    df_basic = sf.load(file_name="data.csv")
+    df_basic = sf.load(file_name="data.csv", alias=None)
 
-    sf.save(df_basic, file_name="data2.csv", index=False)
+    sf.save(df_basic, file_name="data2.csv", index=False, alias=None)
 
     # Step 3
 
@@ -469,7 +469,7 @@ def test_repeated_load():
 
     sf.load(file_name="brands.csv")
     sf.load(file_name="brands.csv")
-    sf.load(file_name="brands.csv")
+    sf.load(file_name="brands.csv", alias=None)
     assert sf.get_doc("Brand") == [IMPORT + NO_DETAILS]
 
     sf.col_step("price", "to int", "price")
@@ -492,13 +492,13 @@ def test_repeated_load_after_save():
     sf.load(file_name="brands.csv")
     sf.load(file_name="brands.csv")
 
-    df = sf.load(file_name="brands.csv")
+    df = sf.load(file_name="brands.csv", alias=None)
     assert sf.get_doc("Brand") == [IMPORT + NO_DETAILS]
 
     sf.col_step("price", "to int ()", "price")
     assert sf.get_doc("price") == [IMPORT + NO_DETAILS, "to int ()"]
 
-    sf.load(file_name="brands.csv")
+    sf.load(file_name="brands.csv", alias=None)
     assert sf.get_doc("price") == [IMPORT + NO_DETAILS, "to int ()"]
     sf.save(df, file_name="brands.csv")
 

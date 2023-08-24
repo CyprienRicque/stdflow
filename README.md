@@ -12,13 +12,11 @@ Create clean data flow pipelines just by replacing you `pd.read_csv()` and `df.t
 ```python
 import stdflow as sf
 from stdflow import Step
+from stdflow import StepRunner
 from stdflow.pipeline import Pipeline
 
 # set a stdflow variable to be used by a pipeline calling this pipeline notebook
-root = sf.var("preprocessing_path", "./")  
-
-def path(ntb):
-    os.path.join(root, ntb)
+country = sf.var("country", "france")  
 
 files = [
     "1. formatting.ipynb",
@@ -28,25 +26,15 @@ files = [
 ]
 
 # create a pipeline with 4 steps
-ppl = Pipeline([Step(exec_file_path=ntb) for ntb in files])
+ppl = Pipeline([StepRunner("1. formatting.ipynb"), StepRunner("2. remove_outliers.ipynb")])
 
 # add step 5 twice with different parameters
-ppl.add_step(
-    Step(
-        exec_file_path=path("5. merge.ipynb"),
-        exec_variables={
-            "country": "france",  # stdflow variable in the notebook "5. merge.ipynb" is configurable
+ppl.add_step("5. merge.ipynb",
+        variables={
+            "country": country,  # stdflow variable in the notebook "5. merge.ipynb" is configurable
         },
     )
-)
-ppl.add_step(
-    Step(
-        exec_file_path=path("5. merge.ipynb"),
-        exec_variables={
-            "country": "spain",
-        },
-    )
-)
+ppl.add_step("5. merge.ipynb", variables={ "country": "spain" })
 
 # run the pipeline
 ppl.run()
@@ -85,7 +73,7 @@ sf.save(
 Each time you perform a save, a metadata.json file is created in the folder.
 This keeps track of how your data was created and other information.
 
-**Specify almost nothing**
+**More Convenient Method**
 
 ```python
 import stdflow as sf
@@ -131,7 +119,7 @@ step.save(df, verbose=True)
 
 ```python
 import stdflow as sf
-sf.save({'what?': "very cool data"}, export_viz_tool=True) # exports viz folder
+sf.save({'what?': "very cool data"},..., export_viz_tool=True) # exports viz folder
 ```
 
 This command exports a folder `metadata_viz` in the same folder as the data you exported.
@@ -170,8 +158,9 @@ A pipeline is composed of steps
 each step should export the data by using export_tabular_data function which does the export in a standard way
 a step can be
 
-- a file: jupyter notebook/ python file
-- a python function
+- a file: jupyter notebook
+- python file (in coming)
+- a python function (in coming)
 
 
 ### Recommended steps
