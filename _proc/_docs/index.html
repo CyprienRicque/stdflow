@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="Data flow tool that transform your notebooks and python files into pipeline steps by standardizing the data input / output. [for Data science project]">
+<meta name="description" content="Data flow tool that transform your notebooks and python files into pipeline steps by standardizing the data input / output.">
 
 <title>stdflow</title>
 <style>
@@ -98,10 +98,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <link rel="stylesheet" href="styles.css">
 <meta property="og:title" content="stdflow">
-<meta property="og:description" content="Data flow tool that transform your notebooks and python files into pipeline steps by standardizing the data input / output. [for Data science project]">
+<meta property="og:description" content="Data flow tool that transform your notebooks and python files into pipeline steps by standardizing the data input / output.">
 <meta property="og:site-name" content="stdflow">
 <meta name="twitter:title" content="stdflow">
-<meta name="twitter:description" content="Data flow tool that transform your notebooks and python files into pipeline steps by standardizing the data input / output. [for Data science project]">
+<meta name="twitter:description" content="Data flow tool that transform your notebooks and python files into pipeline steps by standardizing the data input / output.">
 <meta name="twitter:card" content="summary">
 </head>
 
@@ -183,16 +183,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#pipelines" id="toc-pipelines" class="nav-link" data-scroll-target="#pipelines">Pipelines</a></li>
   </ul></li>
-  <li><a href="#load-and-save-data" id="toc-load-and-save-data" class="nav-link" data-scroll-target="#load-and-save-data">Load and save data</a></li>
+  <li><a href="#load-and-save-data" id="toc-load-and-save-data" class="nav-link" data-scroll-target="#load-and-save-data">Load and save data</a>
+  <ul class="collapse">
+  <li><a href="#option-1-specify-all-parameters" id="toc-option-1-specify-all-parameters" class="nav-link" data-scroll-target="#option-1-specify-all-parameters">Option 1: Specify All Parameters</a></li>
+  <li><a href="#option-2-use-default-variables" id="toc-option-2-use-default-variables" class="nav-link" data-scroll-target="#option-2-use-default-variables">Option 2: Use default variables</a></li>
+  </ul></li>
   <li><a href="#do-not" id="toc-do-not" class="nav-link" data-scroll-target="#do-not">Do not</a></li>
   <li><a href="#data-visualization" id="toc-data-visualization" class="nav-link" data-scroll-target="#data-visualization">Data visualization</a></li>
   <li><a href="#data-organization" id="toc-data-organization" class="nav-link" data-scroll-target="#data-organization">Data Organization</a>
   <ul class="collapse">
   <li><a href="#format" id="toc-format" class="nav-link" data-scroll-target="#format">Format</a></li>
-  <li><a href="#pipeline" id="toc-pipeline" class="nav-link" data-scroll-target="#pipeline">Pipeline</a></li>
-  <li><a href="#recommended-steps" id="toc-recommended-steps" class="nav-link" data-scroll-target="#recommended-steps">Recommended steps</a></li>
   </ul></li>
-  <li><a href="#tests" id="toc-tests" class="nav-link" data-scroll-target="#tests">Tests</a></li>
+  <li><a href="#best-practices" id="toc-best-practices" class="nav-link" data-scroll-target="#best-practices">Best Practices:</a></li>
   </ul>
 <div class="toc-actions"><div><i class="bi bi-github"></i></div><div class="action-links"><p><a href="https://github.com/CyprienRicque/stdflow/issues/new" class="toc-action">Report an issue</a></p></div></div></nav>
     </div>
@@ -206,7 +208,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <div>
   <div class="description">
-    Data flow tool that transform your notebooks and python files into pipeline steps by standardizing the data input / output. [for Data science project]
+    Data flow tool that transform your notebooks and python files into pipeline steps by standardizing the data input / output.
   </div>
 </div>
 
@@ -232,7 +234,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="how-to-use">How to use</h2>
 <section id="pipelines" class="level3">
 <h3 class="anchored" data-anchor-id="pipelines">Pipelines</h3>
-<div class="cell" data-executetime="{&quot;end_time&quot;:&quot;2023-09-21T14:34:15.872295Z&quot;,&quot;start_time&quot;:&quot;2023-09-21T14:34:15.244871Z&quot;}" data-execution_count="1">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> stdflow <span class="im">import</span> StepRunner</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> stdflow.pipeline <span class="im">import</span> Pipeline</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -259,47 +261,45 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>ingestion_ppl</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="1">
+<div class="cell-output cell-output-display">
 <div class="ansi-escaped-output">
 <pre><span class="ansi-bold">
-================================
+</span>================================
             PIPELINE            
 ================================
-
-</span><span class="ansi-bold">STEP 1</span>
+<span class="ansi-bold">STEP 1</span>
     path: ../demo_project/notebooks/01_ingestion/countries.ipynb
     vars: {}
-
 <span class="ansi-bold">STEP 2</span>
     path: ../demo_project/notebooks/01_ingestion/world_happiness.ipynb
     vars: {}
-
 <span class="ansi-bold">================================</span></pre>
 </div>
 </div>
 </div>
 <p>Run the pipeline</p>
-<div class="cell" data-executetime="{&quot;end_time&quot;:&quot;2023-09-21T14:34:22.192639Z&quot;,&quot;start_time&quot;:&quot;2023-09-21T14:34:18.446115Z&quot;}" data-execution_count="2">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>ingestion_ppl.run()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>===============================
-    61.../demo_project/notebooks/01_ingestion/countries.ipynb
-===============================
+<pre><code>=================================================================================
+    01.                ../demo_project/notebooks/01_ingestion/countries.ipynb
+=================================================================================
 Variables: {}
     Path: countries.ipynb
-    Duration: 0 days 00:00:00.662472
+    Duration: 0 days 00:00:00.743971
     Env: {}
 Notebook executed successfully.
 
 
-===============================
-    61.../demo_project/notebooks/01_ingestion/world_happiness.ipynb
-===============================
+=================================================================================
+    02.          ../demo_project/notebooks/01_ingestion/world_happiness.ipynb
+=================================================================================
 Variables: {}
     Path: world_happiness.ipynb
-    Duration: 0 days 00:00:00.655636
+    Duration: 0 days 00:00:00.643122
     Env: {}
 Notebook executed successfully.
+
 </code></pre>
 </div>
 </div>
@@ -307,69 +307,93 @@ Notebook executed successfully.
 </section>
 <section id="load-and-save-data" class="level2">
 <h2 class="anchored" data-anchor-id="load-and-save-data">Load and save data</h2>
-<p><strong>Specify everything</strong></p>
+<section id="option-1-specify-all-parameters" class="level3">
+<h3 class="anchored" data-anchor-id="option-1-specify-all-parameters">Option 1: Specify All Parameters</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> stdflow <span class="im">as</span> sf</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># load data from ./data/raw/twitter/france/step_raw/v_1/countries of the world.csv</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># load data from ../demo_project/data/countries/step_loaded/v_202309212245/countries.csv</span></span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sf.load(</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>   root<span class="op">=</span><span class="st">"./data"</span>, </span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>   attrs<span class="op">=</span>[<span class="st">'twitter'</span>, <span class="st">'france'</span>], <span class="co"># or attrs='twitter/france'</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>   step<span class="op">=</span><span class="st">'raw'</span>, </span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>   version<span class="op">=</span><span class="st">'1'</span>, </span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>   file_name<span class="op">=</span><span class="st">'countries of the world.csv'</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>   root<span class="op">=</span><span class="st">"../demo_project/data/"</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>   attrs<span class="op">=</span>[<span class="st">'countries'</span>],</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>   step<span class="op">=</span><span class="st">'loaded'</span>,</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>   version<span class="op">=</span><span class="st">'202309212245'</span>,  <span class="co"># loads v_202309212245</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>   file_name<span class="op">=</span><span class="st">'countries.csv'</span>,</span>
 <span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>   method<span class="op">=</span>pd.read_csv  <span class="co"># or method='csv'</span></span>
 <span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co"># export data to ./data/raw/twitter/france/step_processed/v_1/countries.csv</span></span>
 <span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>sf.save(</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>   df, </span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>   root<span class="op">=</span><span class="st">"./data"</span>, </span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>   attrs<span class="op">=</span>[<span class="st">'twitter'</span>, <span class="st">'france'</span>], </span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>   step<span class="op">=</span><span class="st">'processed'</span>, </span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>   version<span class="op">=</span><span class="st">'1'</span>, </span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>   file_name<span class="op">=</span><span class="st">'countries.csv'</span>, </span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>   method<span class="op">=</span>pd.to_csv  <span class="co"># or method='csv'  or any function that takes the object to export as first input </span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>   df,</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>   root<span class="op">=</span><span class="st">"../demo_project/data/"</span>,</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>   attrs<span class="op">=</span><span class="st">'countries/'</span>,</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>   step<span class="op">=</span><span class="st">'processed'</span>,</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>   version<span class="op">=</span><span class="st">'new'</span>,  <span class="co"># creates v_new</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>   file_name<span class="op">=</span><span class="st">'countries.csv'</span>,</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>   method<span class="op">=</span>pd.DataFrame.to_csv,  <span class="co"># or method='csv'  or any function that takes the object to export as first input</span></span>
 <span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>attrs=countries/::step_name=processed::version=new::file_name=countries.csv</code></pre>
+</div>
 </div>
 <p>Each time you perform a save, a metadata.json file is created in the folder. This keeps track of how your data was created and other information.</p>
-<p><strong>More Convenient Method</strong></p>
+</section>
+<section id="option-2-use-default-variables" class="level3">
+<h3 class="anchored" data-anchor-id="option-2-use-default-variables">Option 2: Use default variables</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> stdflow <span class="im">as</span> sf</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># use package level default values</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>sf.root <span class="op">=</span> <span class="st">"./data"</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>sf.attrs <span class="op">=</span> [<span class="st">'twitter'</span>, <span class="st">'france'</span>]  <span class="co"># if needed use attrs_in and attrs_out</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>sf.step_in <span class="op">=</span> <span class="st">'raw'</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>sf.step_out <span class="op">=</span> <span class="st">'processed'</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sf.load()  </span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co"># ! root / attrs / step : used from default values set above</span></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co"># ! version : the last version was automatically used. default: ":last"</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co"># ! file_name : the file, alone in the folder, was automatically found</span></span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co"># ! method : was automatically used from the file extension</span></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>sf.save(df)</span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co"># ! root / attrs / step : used from default values set above</span></span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co"># ! version: used default %Y%m%d%H%M format</span></span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="co"># ! file_name: used from the input (because only one file)</span></span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="co"># ! method : inferred from file name</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> stdflow <span class="im">as</span> sf</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># use package level default values</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>sf.root <span class="op">=</span> <span class="st">"../demo_project/data/"</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>sf.attrs <span class="op">=</span> <span class="st">'countries'</span>  <span class="co"># if needed use attrs_in and attrs_out</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>sf.step_in <span class="op">=</span> <span class="st">'loaded'</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>sf.step_out <span class="op">=</span> <span class="st">'processed'</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> sf.load()</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="co"># ! root / attrs / step : used from default values set above</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="co"># ! version : the last version was automatically used. default: ":last"</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="co"># ! file_name : the file, alone in the folder, was automatically found</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="co"># ! method : was automatically used from the file extension</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>sf.save(df)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="co"># ! root / attrs / step : used from default values set above</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a><span class="co"># ! version: used default %Y%m%d%H%M format</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="co"># ! file_name: used from the input (because only one file)</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="co"># ! method : inferred from file name</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<pre><code>attrs=countries::step_name=processed::version=202309212303::file_name=countries.csv</code></pre>
+</div>
 </div>
 <p>Note that everything we did at package level can be done with the Step class</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> stdflow <span class="im">import</span> Step</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>step <span class="op">=</span> Step(root<span class="op">=</span><span class="st">"./data"</span>, attrs<span class="op">=</span>[<span class="st">'twitter'</span>, <span class="st">'france'</span>], step_in<span class="op">=</span><span class="st">'raw'</span>, step_out<span class="op">=</span><span class="st">'processed'</span>)</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># or set after</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>step.root <span class="op">=</span> <span class="st">"./data"</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co"># ...</span></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> step.load(version<span class="op">=</span><span class="st">':last'</span>, file_name<span class="op">=</span><span class="st">":auto"</span>, verbose<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>step.save(df, verbose<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>`</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> stdflow <span class="im">import</span> Step</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>step <span class="op">=</span> Step(</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    root<span class="op">=</span><span class="st">"../demo_project/data/"</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    attrs<span class="op">=</span><span class="st">'countries'</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    step_in<span class="op">=</span><span class="st">'loaded'</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    step_out<span class="op">=</span><span class="st">'processed'</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="co"># or set after</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>step.root <span class="op">=</span> <span class="st">"../demo_project/data/"</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co"># ...</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> step.load(version<span class="op">=</span><span class="st">':last'</span>, file_name<span class="op">=</span><span class="st">":auto"</span>, verbose<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>step.save(df, verbose<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>INFO:stdflow.step:Loading data from ../demo_project/data/countries/step_loaded/v_202309212302/countries.csv
+INFO:stdflow.step:Data loaded from ../demo_project/data/countries/step_loaded/v_202309212302/countries.csv
+INFO:stdflow.step:Saving data to ../demo_project/data/countries/step_processed/v_202309212304/countries.csv
+INFO:stdflow.step:Data saved to ../demo_project/data/countries/step_processed/v_202309212304/countries.csv
+INFO:stdflow.step:Saving metadata to ../demo_project/data/countries/step_processed/v_202309212304/</code></pre>
 </div>
+<div class="cell-output cell-output-display">
+<pre><code>attrs=countries::step_name=processed::version=202309212304::file_name=countries.csv</code></pre>
+</div>
+</div>
+</section>
 </section>
 <section id="do-not" class="level2">
 <h2 class="anchored" data-anchor-id="do-not">Do not</h2>
@@ -380,9 +404,18 @@ Notebook executed successfully.
 <section id="data-visualization" class="level2">
 <h2 class="anchored" data-anchor-id="data-visualization">Data visualization</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> stdflow <span class="im">as</span> sf</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>sf.save({<span class="st">'what?'</span>: <span class="st">"very cool data"</span>},..., export_viz_tool<span class="op">=</span><span class="va">True</span>) <span class="co"># exports viz folder</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>`</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> stdflow <span class="im">as</span> sf</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>step.save(df, verbose<span class="op">=</span><span class="va">True</span>, export_viz_tool<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>INFO:stdflow.step:Saving data to ../demo_project/data/countries/step_processed/v_202309212304/countries.csv
+INFO:stdflow.step:Data saved to ../demo_project/data/countries/step_processed/v_202309212304/countries.csv
+INFO:stdflow.step:Saving metadata to ../demo_project/data/countries/step_processed/v_202309212304/
+INFO:stdflow.step:Exporting viz tool to ../demo_project/data/countries/step_processed/v_202309212304/</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<pre><code>attrs=countries::step_name=processed::version=202309212304::file_name=countries.csv</code></pre>
+</div>
 </div>
 <p>This command exports a folder <code>metadata_viz</code> in the same folder as the data you exported. The metadata to display is saved in the metadata.json file.</p>
 <p>In order to display it you need to get both the file and the folder on your local pc (download if you are working on a server)</p>
@@ -405,61 +438,14 @@ Notebook executed successfully.
 </ul>
 <p>Each folder is the output of a step. It contains a metadata.json file with information about all files in the folder and how it was generated. It can also contain a html page (if you set <code>html_export=True</code> in <code>save()</code>) that lets you visualize the pipeline and your metadata</p>
 </section>
-<section id="pipeline" class="level3">
-<h3 class="anchored" data-anchor-id="pipeline">Pipeline</h3>
-<p>A pipeline is composed of steps each step should export the data by using export_tabular_data function which does the export in a standard way a step can be</p>
+</section>
+<section id="best-practices" class="level2">
+<h2 class="anchored" data-anchor-id="best-practices">Best Practices:</h2>
 <ul>
-<li>a file: jupyter notebook</li>
-<li>python file (in coming)</li>
-<li>a python function (in coming)</li>
+<li>Do not use <code>sf.reset</code> as part of your final code</li>
+<li>In one step, export only to one path (except the version). meaning for one step only one combination of attrs and step_name</li>
+<li>Do not set sub-dirs within the export (i.e.&nbsp;version folder is the last depth). if you need similar operation for different datasets, create pipelines</li>
 </ul>
-</section>
-<section id="recommended-steps" class="level3">
-<h3 class="anchored" data-anchor-id="recommended-steps">Recommended steps</h3>
-<p>You can set up any step you want. However, just like any tools there are good/bad and common ways to use it.</p>
-<p>The recommended way to use it is:</p>
-<ol type="1">
-<li>Load
-<ul>
-<li>Use a custom load function to load you raw datasets if needed</li>
-<li>Fix column names</li>
-<li>Fix values
-<ul>
-<li>Except those for which you would like to test multiple methods that impacts ml models.</li>
-</ul></li>
-<li>Fix column types</li>
-</ul></li>
-<li>Merge
-<ul>
-<li>Merge data from multiple sources</li>
-</ul></li>
-<li>Transform
-<ul>
-<li>Pre-processing step along with most plots and analysis</li>
-</ul></li>
-<li>Feature engineering (step that is likely to see many iterations) &gt; <em>The output of this step goes into the model</em>
-<ul>
-<li>Create features</li>
-<li>Fill missing values</li>
-</ul></li>
-<li>Model
-<ul>
-<li>This step likely contains gridsearch and therefore output multiple resulting datasets</li>
-<li>Train model</li>
-<li>Evaluate model (or moved to a separate step)</li>
-<li>Save model</li>
-</ul></li>
-</ol>
-<p><strong>Best Practices</strong>: - Do not use <code>sf.reset</code> as part of your final code - In one step, export only to one path (except the version). meaning for one step only one combination of attrs and step_name - Do not set sub-dirs within the export (i.e.&nbsp;version folder is the last depth). if you need similar operation for different datasets, create pipelines</p>
-</section>
-</section>
-<section id="tests" class="level2">
-<h2 class="anchored" data-anchor-id="tests">Tests</h2>
-<p>tests are run with pytest</p>
-<p>/!&nbsp;run from project root</p>
-<p>pytest</p>
-<p>Data flow tool that transform your notebooks and python files into pipeline steps by standardizing the data input / output. (for data science projects)</p>
-<p>Create clean data flow pipelines just by replacing you <code>pd.read_csv()</code> and <code>df.to_csv()</code> by <code>sf.load()</code> and <code>sf.save()</code>.</p>
 
 
 </section>

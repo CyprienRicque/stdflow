@@ -69,74 +69,73 @@ Run the pipeline
 ingestion_ppl.run()
 ```
 
-    DEBUG:stdflow.environ_manager:setting variables {}
-    DEBUG:stdflow.environ_manager:setting variables {}
-
-    ===============================
-        61.../demo_project/notebooks/01_ingestion/countries.ipynb
-    ===============================
+    =================================================================================
+        01.                ../demo_project/notebooks/01_ingestion/countries.ipynb
+    =================================================================================
     Variables: {}
         Path: countries.ipynb
-        Duration: 0 days 00:00:00.771219
+        Duration: 0 days 00:00:00.743971
         Env: {}
     Notebook executed successfully.
 
 
-    ===============================
-        61.../demo_project/notebooks/01_ingestion/world_happiness.ipynb
-    ===============================
+    =================================================================================
+        02.          ../demo_project/notebooks/01_ingestion/world_happiness.ipynb
+    =================================================================================
     Variables: {}
         Path: world_happiness.ipynb
-        Duration: 0 days 00:00:00.644832
+        Duration: 0 days 00:00:00.643122
         Env: {}
     Notebook executed successfully.
 
 ## Load and save data
 
-**Specify everything**
+### Option 1: Specify All Parameters
 
 ``` python
 import stdflow as sf
 import pandas as pd
 
-# load data from ./data/raw/twitter/france/step_raw/v_1/countries of the world.csv
+# load data from ../demo_project/data/countries/step_loaded/v_202309212245/countries.csv
 df = sf.load(
-   root="./data", 
-   attrs=['twitter', 'france'], # or attrs='twitter/france'
-   step='raw', 
-   version='1', 
-   file_name='countries of the world.csv',
+   root="../demo_project/data/",
+   attrs=['countries'],
+   step='loaded',
+   version='202309212245',  # loads v_202309212245
+   file_name='countries.csv',
    method=pd.read_csv  # or method='csv'
 )
 
 # export data to ./data/raw/twitter/france/step_processed/v_1/countries.csv
 sf.save(
-   df, 
-   root="./data", 
-   attrs=['twitter', 'france'], 
-   step='processed', 
-   version='1', 
-   file_name='countries.csv', 
-   method=pd.to_csv  # or method='csv'  or any function that takes the object to export as first input 
+   df,
+   root="../demo_project/data/",
+   attrs='countries/',
+   step='processed',
+   version='new',  # creates v_new
+   file_name='countries.csv',
+   method=pd.DataFrame.to_csv,  # or method='csv'  or any function that takes the object to export as first input
 )
 ```
+
+    attrs=countries/::step_name=processed::version=new::file_name=countries.csv
 
 Each time you perform a save, a metadata.json file is created in the
 folder. This keeps track of how your data was created and other
 information.
 
-**More Convenient Method**
+### Option 2: Use default variables
 
 ``` python
 import stdflow as sf
 
 # use package level default values
-sf.root = "./data"
-sf.attrs = ['twitter', 'france']  # if needed use attrs_in and attrs_out
-sf.step_in = 'raw'
+sf.root = "../demo_project/data/"
+sf.attrs = 'countries'  # if needed use attrs_in and attrs_out
+sf.step_in = 'loaded'
 sf.step_out = 'processed'
 
-df = sf.load()  
+df = sf.load()
 # ! root / attrs / step : used from default values set above
 # ! version : the last version was automatically used. default: ":last"
 # ! file_name : the file, alone in the folder, was automatically found
@@ -149,22 +148,36 @@ sf.save(df)
 # ! method : inferred from file name
 ```
 
+    attrs=countries::step_name=processed::version=202309212303::file_name=countries.csv
+
 Note that everything we did at package level can be done with the Step
 class
 
 ``` python
 from stdflow import Step
 
-step = Step(root="./data", attrs=['twitter', 'france'], step_in='raw', step_out='processed')
+step = Step(
+    root="../demo_project/data/",
+    attrs='countries',
+    step_in='loaded',
+    step_out='processed'
+)
 # or set after
-step.root = "./data"
+step.root = "../demo_project/data/"
 # ...
 
 df = step.load(version=':last', file_name=":auto", verbose=True)
 
 step.save(df, verbose=True)
-`
 ```
+
+    INFO:stdflow.step:Loading data from ../demo_project/data/countries/step_loaded/v_202309212302/countries.csv
+    INFO:stdflow.step:Data loaded from ../demo_project/data/countries/step_loaded/v_202309212302/countries.csv
+    INFO:stdflow.step:Saving data to ../demo_project/data/countries/step_processed/v_202309212304/countries.csv
+    INFO:stdflow.step:Data saved to ../demo_project/data/countries/step_processed/v_202309212304/countries.csv
+    INFO:stdflow.step:Saving metadata to ../demo_project/data/countries/step_processed/v_202309212304/
+
+    attrs=countries::step_name=processed::version=202309212304::file_name=countries.csv
 
 ## Do not
 
@@ -175,9 +188,16 @@ step.save(df, verbose=True)
 
 ``` python
 import stdflow as sf
-sf.save({'what?': "very cool data"},..., export_viz_tool=True) # exports viz folder
-`
+
+step.save(df, verbose=True, export_viz_tool=True)
 ```
+
+    INFO:stdflow.step:Saving data to ../demo_project/data/countries/step_processed/v_202309212304/countries.csv
+    INFO:stdflow.step:Data saved to ../demo_project/data/countries/step_processed/v_202309212304/countries.csv
+    INFO:stdflow.step:Saving metadata to ../demo_project/data/countries/step_processed/v_202309212304/
+    INFO:stdflow.step:Exporting viz tool to ../demo_project/data/countries/step_processed/v_202309212304/
+
+    attrs=countries::step_name=processed::version=202309212304::file_name=countries.csv
 
 This command exports a folder `metadata_viz` in the same folder as the
 data you exported. The metadata to display is saved in the metadata.json
@@ -218,62 +238,11 @@ with information about all files in the folder and how it was generated.
 It can also contain a html page (if you set `html_export=True` in
 `save()`) that lets you visualize the pipeline and your metadata
 
-### Pipeline
+## Best Practices:
 
-A pipeline is composed of steps each step should export the data by
-using export_tabular_data function which does the export in a standard
-way a step can be
-
-- a file: jupyter notebook
-- python file (in coming)
-- a python function (in coming)
-
-### Recommended steps
-
-You can set up any step you want. However, just like any tools there are
-good/bad and common ways to use it.
-
-The recommended way to use it is:
-
-1.  Load
-    - Use a custom load function to load you raw datasets if needed
-    - Fix column names
-    - Fix values
-      - Except those for which you would like to test multiple methods
-        that impacts ml models.
-    - Fix column types
-2.  Merge
-    - Merge data from multiple sources
-3.  Transform
-    - Pre-processing step along with most plots and analysis
-4.  Feature engineering (step that is likely to see many iterations) \>
-    *The output of this step goes into the model*
-    - Create features
-    - Fill missing values
-5.  Model
-    - This step likely contains gridsearch and therefore output multiple
-      resulting datasets
-    - Train model
-    - Evaluate model (or moved to a separate step)
-    - Save model
-
-**Best Practices**: - Do not use `sf.reset` as part of your final code -
-In one step, export only to one path (except the version). meaning for
-one step only one combination of attrs and step_name - Do not set
-sub-dirs within the export (i.e. version folder is the last depth). if
-you need similar operation for different datasets, create pipelines
-
-## Tests
-
-tests are run with pytest
-
-/! run from project root
-
-pytest
-
-Data flow tool that transform your notebooks and python files into
-pipeline steps by standardizing the data input / output. (for data
-science projects)
-
-Create clean data flow pipelines just by replacing you `pd.read_csv()`
-and `df.to_csv()` by `sf.load()` and `sf.save()`.
+- Do not use `sf.reset` as part of your final code
+- In one step, export only to one path (except the version). meaning for
+  one step only one combination of attrs and step_name
+- Do not set sub-dirs within the export (i.e. version folder is the last
+  depth). if you need similar operation for different datasets, create
+  pipelines
