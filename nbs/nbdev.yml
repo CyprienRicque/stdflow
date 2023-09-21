@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "stdflow"
+  site-url: "https://CyprienRicque.github.io/stdflow"
+  description: "Data flow tool that transform your notebooks and python files into pipeline steps by standardizing the data input / output. [for Data science project]"
+  repo-branch: main
+  repo-url: "https://github.com/CyprienRicque/stdflow"
