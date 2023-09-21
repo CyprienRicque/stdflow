@@ -1,27 +1,3 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://CyprienRicque.github.io/stdflow/index.html</loc>
-    <lastmod>2023-09-21T10:53:50.908Z</lastmod>
-  </url>
-  <url>
-    <loc>https://CyprienRicque.github.io/stdflow/config.html</loc>
-    <lastmod>2023-09-21T09:40:21.862Z</lastmod>
-  </url>
-  <url>
-    <loc>https://CyprienRicque.github.io/stdflow/pipeline.html</loc>
-    <lastmod>2023-09-21T13:51:32.168Z</lastmod>
-  </url>
-  <url>
-    <loc>https://CyprienRicque.github.io/stdflow/step.html</loc>
-    <lastmod>2023-09-21T13:51:40.309Z</lastmod>
-  </url>
-  <url>
-    <loc>https://CyprienRicque.github.io/stdflow/nbdev_broken.html</loc>
-    <lastmod>2023-09-21T09:51:25.320Z</lastmod>
-  </url>
-  <url>
-    <loc>https://CyprienRicque.github.io/stdflow/step_runner.html</loc>
-    <lastmod>2023-09-21T13:51:20.627Z</lastmod>
-  </url>
 </urlset>
