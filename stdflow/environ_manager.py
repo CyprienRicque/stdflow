@@ -1,20 +1,9 @@
 from __future__ import annotations
 
-import glob
 import json
 import logging
 import os
-import uuid
-import warnings
-from datetime import datetime
-
-from stdflow.stdflow_utils.caller_metadata import (
-    get_caller_metadata,
-    get_calling_package__,
-    get_notebook_name,
-    get_notebook_path,
-)
-from stdflow.stdflow_utils.execution import run_function, run_notebook, run_python_file
+from stdflow.config import RUN_ENV_KEY, PATHS_ENV_KEY, prefix
 
 try:
     from typing import Any, Literal, Optional, Tuple, Union
@@ -23,11 +12,7 @@ except ImportError:
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.WARNING)
-
-prefix = "stdflow__"
-PATHS_ENV_KEY = f"{prefix}run__files_path"
-RUN_ENV_KEY = f"{prefix}run"
+logger.setLevel(logging.DEBUG)
 
 
 class FlowEnv:  # has to be singleton
@@ -90,6 +75,7 @@ class FlowEnv:  # has to be singleton
             os.environ[PATHS_ENV_KEY] = path
 
     def set_vars(self, variables):
+        logger.debug(f"setting variables {variables}")
         os.environ[f"{prefix}{self.id}__vars"] = json.dumps(variables)
 
     def var(self, key) -> str | None:

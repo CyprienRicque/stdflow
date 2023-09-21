@@ -5,6 +5,7 @@ import os
 import nbformat
 import pandas as pd
 from colorama import Fore, Style
+from nbclient.exceptions import CellExecutionError
 from nbconvert.preprocessors import ExecutePreprocessor
 from traitlets.config import Config
 
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-def run_notebook(path, env_vars, **kwargs):
+def run_notebook(path, env_vars, save_notebook: bool = False, **kwargs):
     # Set environment variables
     # Load notebook
     # print("cwd", os.getcwd())
@@ -55,8 +56,12 @@ def run_notebook(path, env_vars, **kwargs):
     ep = ExecutePreprocessor(config=c)
 
     try:
+        # TODO Additional resources used in the conversion process. For example,
+        #             passing ``{'metadata': {'path': run_path}}`` sets the
+        #             execution path to ``run_path``.
         out = ep.preprocess(nb)
         # executed cell has "ExecuteTime" metadata out[0]['cells'][-1]['metadata']['ExecuteTime']['end_time']
+
         first_cell_executed = next(
             (c for c in out[0]["cells"] if "metadata" in c and "execution" in c["metadata"]),
             None,
@@ -78,16 +83,27 @@ def run_notebook(path, env_vars, **kwargs):
                 for output in last_cell_executed["outputs"]:
                     if "text" in output:
                         print(f"\tLast cell output: [[{output['text'].strip()}]]")
+
         except KeyError:
             # logger.warning("Internal error generating the execution report.")
             print(Fore.RED + "Error generating the execution report" + Style.RESET_ALL)
         finally:
             print(Style.BRIGHT + Fore.GREEN + "Notebook executed successfully." + Style.RESET_ALL)
 
+    except CellExecutionError as e:
+        # msg = 'Error executing the notebook "%s".\n\n' % notebook_filename
+        # msg += 'See notebook "%s" for the traceback.' % notebook_filename_out
+        # print(msg)
+        print(Style.BRIGHT + Fore.RED + "Error executing the notebook: " + Style.RESET_ALL + path)
+        raise e
     except Exception as e:
         print(Style.BRIGHT + Fore.RED + "Error executing the notebook: " + Style.RESET_ALL + path)
         # logger.error(f"Error executing the notebook: {path}")
         raise e
+    finally:
+        if save_notebook:
+            with open(path, mode="w", encoding="utf-8") as f:
+                nbformat.write(nb, f)
 
 
 def run_function(path, function_name, env_vars=None, **kwargs):

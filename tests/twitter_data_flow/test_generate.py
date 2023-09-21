@@ -3,7 +3,8 @@ import os
 import pandas as pd
 import pytest
 
-from stdflow import Step, StepRunner
+from stdflow import Step
+from stdflow import StepRunner
 
 
 def test_create_fake_data():

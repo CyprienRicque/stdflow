@@ -1,7 +1,11 @@
+Comment like nbdev to ignore some cells when running the notebook
 
+json type export
 
-TODO: add pipelines
-TODO: add excalidraw schema
+integration with pandas
+
+auto delete previous version
+
 TODO: add import export of other data types: [structured, unstructured, semi-structured]
 TODO: add test loop
 TODO: example architecture with

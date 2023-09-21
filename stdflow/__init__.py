@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import os
+
+from stdflow.config import RUN_ENV_KEY
 from stdflow.stdflow_path.data_path import DataPath
 
 # isort: off
 # -> Following is used by end user
-from stdflow.dataframe_ext import pandas_document
+# from stdflow.dataframe_ext import pandas_document
 from stdflow.step import Step
 from stdflow.step_runner import StepRunner
 from stdflow.pipeline import Pipeline
@@ -19,7 +22,7 @@ except ImportError:
 
 import pandas as pd
 
-__version__ = "0.0.62"
+__version__ = "0.0.63"
 
 import logging
 import sys
@@ -31,14 +34,16 @@ logging.basicConfig()
 logger = logging.getLogger(__name__)
 
 
-
-
 class Module(object):
     def __init__(self, module):
         self.__module = module
 
     def __getattr__(self, name):
         return getattr(self.__module, name)
+
+    @staticmethod
+    def from_pipeline():
+        return os.getenv(RUN_ENV_KEY, False)
 
     @property
     def step(self):
@@ -331,6 +336,10 @@ else:  # normal import, use `Module` class to provide `attr` property
 #######################################################################
 # Just a copy of the above class directly in the file for completion
 #######################################################################
+
+
+def from_pipeline():
+    ...
 
 
 @property
