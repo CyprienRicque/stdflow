@@ -6,7 +6,7 @@ Data flow tool that transform your notebooks and python files into
 pipeline steps by standardizing the data input / output. (for data
 science projects)
 
-Create clean data flow pipelines just by replacing you `pd.read_csv()`
+Create clean data flow pipelines just by replacing your `pd.read_csv()`
 and `df.to_csv()` by `sf.load()` and `sf.save()`.
 
 [Documentation](https://cyprienricque.github.io/stdflow/)
@@ -217,7 +217,7 @@ Data flow tool that transform your notebooks and python files into
 pipeline steps by standardizing the data input / output. (for data
 science projects)
 
-Create clean data flow pipelines just by replacing you `pd.read_csv()`
+Create clean data flow pipelines just by replacing your `pd.read_csv()`
 and `df.to_csv()` by `sf.load()` and `sf.save()`.
 
 ## Data Organization
