@@ -1,8 +1,0 @@
-website:
-  sidebar:
-    contents:
-      - index.ipynb
-      - 00_config.ipynb
-      - 02_step.ipynb
-      - 04_step_runner.ipynb
-      - 05_pipeline.ipynb

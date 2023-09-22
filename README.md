@@ -9,11 +9,15 @@ science projects)
 Create clean data flow pipelines just by replacing you `pd.read_csv()`
 and `df.to_csv()` by `sf.load()` and `sf.save()`.
 
+[Documentation](https://cyprienricque.github.io/stdflow/)
+
 ## Install
 
 ``` sh
 pip install stdflow
 ```
+
+[Documentation](https://cyprienricque.github.io/stdflow/)
 
 ## How to use
 
