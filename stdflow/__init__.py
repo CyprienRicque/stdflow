@@ -122,6 +122,14 @@ class Module(object):
         self.step.version_out = version_name
 
     @property
+    def version(self) -> str:
+        return self.step.version
+
+    @version.setter
+    def version(self, version_name: str) -> None:
+        self.step.version = version_name
+
+    @property
     def attrs_out(self) -> list | str:
         return self.step.attrs_out
 
@@ -434,6 +442,16 @@ def version_out() -> str:
 
 @version_out.setter
 def version_out(version_name: str) -> None:
+    ...
+
+
+@property
+def version() -> str:
+    ...
+
+
+@version.setter
+def version(version_name: str) -> None:
     ...
 
 

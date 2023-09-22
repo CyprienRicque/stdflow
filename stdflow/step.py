@@ -102,20 +102,21 @@ class Step(ModuleType):
     "Step Class for easy data loading and exporting. Also present at package level"
     def __init__(
         self,
-        root: str | None = "./data", # Specify the root folder of the data. Not exported in metadata
-        attrs: str | list[str] | None = None, # Specify the attributes part of the path
+        root: str | None = "./data", # Default root folder of data path. Not exported in metadata
+        attrs: str | list[str] | None = None, # Default attributes part of the path
+        version: str | None = ":default", # Default version name (cannot use :last or other custom variables)
         file_name: str | None = ":auto", # Specify the file name. See file_name_in and file_name_out for more details on :auto behaviour 
         method_in: str | object | None = ":auto", # Default method to load the data.  # Method to load the data. Can be a function with path as first argument or a string among [csv, excel, xlsx, xls, parquet, json, pickle, feather, hdf, sql, pkl].
         root_in: str | None = ":default", # Default root folder when loading [not recommended, use root instead]
         attrs_in: str | list[str] | None = ":default", # Default attributes when loading
         step_in: str | None = None, # Default step name when loading
-        version_in: str | None = ":last", # Default version name when loading
+        version_in: str | None = ":default", # Default version name when loading
         file_name_in: str | None = ":default", # Default file name when loading
         method_out: str | object | None = ":auto", # Default method to save the data. Can a function with path as first argument or a string among [csv, excel, xlsx, xls, parquet, json, pickle, feather, hdf, sql, pkl] 
         root_out: str | None = ":default", # Default root folder when saving [not recommended, use root instead]
         attrs_out: str | list[str] | None = ":default", # Default attributes when saving
         step_out: str | None = None, # Default step name when saving
-        version_out: str | None = DEFAULT_DATE_VERSION_FORMAT, # Default version name when saving
+        version_out: str | None = ":default", # Default version name when saving
         file_name_out: str | None = ":default", # Default file name when saving
         md_all_files: list[FileMetaData] = None, # Internal. Do not use
         md_direct_input_files: list[FileMetaData] = None, # Internal. Do not use
@@ -158,6 +159,7 @@ class Step(ModuleType):
         self._file_name_out = file_name_out
 
         self._root = root
+        self._version = version
         self._attrs = attrs
         self._file_name = file_name
 
@@ -171,12 +173,13 @@ class Step(ModuleType):
         *,
         root: str | None = "./data",
         attrs: str | list[str] | None = None,
+        version: str | None = ":default",
         file_name: str | None = ":auto",
         method_in: str | object | None = ":auto",
         root_in: str | None = ":default",
         attrs_in: str | list[str] | None = ":default",
         step_in: str | None = None,
-        version_in: str | None = ":last",
+        version_in: str | None = ":default",
         file_name_in: str | None = ":default",
         method_out: str | object | None = ":auto",
         root_out: str | None = ":default",
@@ -187,6 +190,7 @@ class Step(ModuleType):
     ):
         self._root = root
         self._attrs = attrs
+        self._version = version
         self._file_name = file_name
 
         self._method_in = method_in
@@ -342,7 +346,7 @@ class Step(ModuleType):
         attrs = get_arg_value(get_arg_value(attrs, self._attrs_in), self._attrs)
         file_name = get_arg_value(get_arg_value(file_name, self._file_name_in), self._file_name)
         step = get_arg_value(step, self._step_in)
-        version = get_arg_value(version, self._version_in)
+        version = get_arg_value(get_arg_value(get_arg_value(version, self._version_in), self._version), ":last")
         method = get_arg_value(method, self._method_in)
 
         # if self.env.running() and root is None:
@@ -455,7 +459,7 @@ class Step(ModuleType):
         root = get_arg_value(get_arg_value(root, self._root_out), self._root)
         attrs = get_arg_value(get_arg_value(attrs, self._attrs_out), self._attrs)
         step = get_arg_value(step, self._step_out)
-        version = get_arg_value(version, self._version_out)
+        version = get_arg_value(get_arg_value(get_arg_value(version, self._version_out), self._version), DEFAULT_DATE_VERSION_FORMAT)
         file = get_arg_value(get_arg_value(file_name, self._file_name_out), self._file_name)
         method = get_arg_value(method, self._method_out)
 
@@ -668,6 +672,14 @@ class Step(ModuleType):
     @version_in.setter
     def version_in(self, version_name: str) -> None:
         self._version_in = version_name
+
+    @property
+    def version(self) -> str:
+        return self._version
+
+    @version.setter
+    def version(self, version_name: str) -> None:
+        self._version = version_name
 
     @property
     def attrs_in(self) -> list | str:

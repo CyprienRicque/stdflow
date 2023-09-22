@@ -72,7 +72,7 @@ class Pipeline:
                 it.desc = f"Pipeline: {step.worker_path}"
 
             text = step.worker_path
-            print_header(text, longest_worker_path_adjusted, min_blank)
+            print_header(text, i, longest_worker_path_adjusted, min_blank)
             print(f"Variables: {step.env_vars}")
             # Run step
             step.run(verbose=False, **kwargs)
