@@ -67,7 +67,7 @@ class DataPath(Path):
         if file_name == ":auto" or glob is True:
             self.file_name = self.detect_file_name(file_name, glob=glob)
 
-    def detect_file_name(self, file_name, glob=False):
+    def detect_file_name(self, file_name, glob=False):  # FIXME detect files based on extension
         if not os.path.isdir(self.dir_path):
             logger.error(f"Path {self.dir_path} does not exist")
         if glob is True and file_name is not None and file_name is not ":auto":
