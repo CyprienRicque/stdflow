@@ -9,6 +9,7 @@ from stdflow.stdflow_utils.listing import (
     list_csv_files,
     list_excel_files,
     list_files_glob,
+    list_non_metadata_files,
 )
 
 try:
@@ -76,6 +77,8 @@ class DataPath(Path):
             files = list_csv_files(self.dir_path)
             if not files:
                 files = list_excel_files(self.dir_path)
+                if not files:
+                    files = list_non_metadata_files(self.dir_path)
         if len(files) == 1:
             logger.debug(f"Using file {files[0]}")
             return files[0]
