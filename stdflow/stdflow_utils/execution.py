@@ -50,8 +50,7 @@ def run_notebook(path, env_vars, save_notebook: bool = False, **kwargs):
     # c.ExecutePreprocessor.timeout = 600   # Set execution timeout
 
     if "kernel_name" in kwargs:
-        c.ExecutePreprocessor.kernel_name = kwargs["kernel_name"]
-    # c.ExecutePreprocessor.kernel_name = 'py37'
+        c.ExecutePreprocessor.kernel_name = kwargs["kernel_name"]  # py37
     logger.debug(c)
     ep = ExecutePreprocessor(config=c)
 
