@@ -46,6 +46,11 @@ def list_excel_files(directory):
     return list_files_glob(directory, "*.xlsx") + list_files_glob(directory, "*.xls")
 
 
+def list_non_metadata_files(directory):
+    files = list_files_glob(directory, "*.*")
+    return list(set(files) - {"metadata.json"})
+
+
 def list_csv_files(directory):
     return list_files_glob(directory, "*.csv")
 
