@@ -17,8 +17,6 @@ and `df.to_csv()` by `sf.load()` and `sf.save()`.
 pip install stdflow
 ```
 
-[Documentation](https://cyprienricque.github.io/stdflow/)
-
 ## How to use
 
 ### Pipelines
