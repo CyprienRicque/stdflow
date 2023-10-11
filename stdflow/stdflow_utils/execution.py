@@ -11,31 +11,11 @@ from jupyter_client.kernelspec import NoSuchKernel
 from nbclient.exceptions import CellExecutionError
 from nbconvert.preprocessors import ExecutePreprocessor
 from traitlets.config import Config
-from stdflow.stdflow_utils.kernel import find_current_kernel_name
+from stdflow.stdflow_utils.kernel import find_current_kernel_name, list_kernels
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-import json
-from jupyter_client.kernelspec import KernelSpecManager
-
-
-def list_kernels(verbose: bool = False) -> list[str]:
-    # list ipykernels
-    # jupyter kernelspec list
-    # show current default ipykernel
-    # jupyter kernelspec list --json
-    # list all ipykernels
-    # jupyter kernelspec list --json
-    ksm = KernelSpecManager()
-    kernels = ksm.get_all_specs()
-    for kernel_name, kernel_info in kernels.items():
-        if verbose:
-            print(f"Kernel Name: {kernel_name}")
-            print(json.dumps(kernel_info, indent=4))
-            print("-" * 40)
-
-    return [kernel_name for kernel_name, kernel_info in kernels.items()]
 
 
 # :current kernel
@@ -73,6 +53,8 @@ class KernelManager:
     def __iter__(self):
         for k in [self.kernel] + self.kernels_on_fail:
             kernel = get_kernel(k, self.nb_target)
+            if not kernel:  # do not return None kernels
+                continue
             yield kernel
 
 
@@ -109,19 +91,17 @@ def run_notebook(
         c.ExecutePreprocessor.timeout = kwargs["timeout"]
     # c.ExecutePreprocessor.timeout = 600   # Set execution timeout
 
-    if verbose is True:
-        print("using kernel: ", kernel)
-
     try:
         kernel_manager = KernelManager(kernel, kernels_on_fail, nb)
         for kernel in kernel_manager:
             try:
-                print(f"run with kernel: {kernel}")
+                if verbose is True:
+                    print(f"Run with kernel: {kernel}")
                 c.ExecutePreprocessor.kernel_name = kernel
                 logger.debug(c)
                 ep = ExecutePreprocessor(config=c)
                 out = ep.preprocess(nb, resources={"metadata": {"path": run_path}})
-                break
+                break  # break loop on kernel exec success
             except NoSuchKernel:
                 print(Fore.RED + f"Kernel {kernel} not found" + Style.RESET_ALL)
                 continue
