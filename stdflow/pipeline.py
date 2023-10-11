@@ -26,6 +26,7 @@ logger.setLevel(logging.WARNING)
 # %% ../nbs/05_pipeline.ipynb 6
 class Pipeline:
     "Create pipeline of notebooks with optional variables"
+
     def __init__(self, steps: List[StepRunner] | StepRunner = None, *args):
         steps = [steps] if isinstance(steps, StepRunner) else steps or []
         steps += list(args) if args else []
@@ -39,9 +40,9 @@ class Pipeline:
         return is_valid
 
     def add_step(
-            self, 
-            step: StepRunner | str = None, # StepRunner or path to notebook
-            **kwargs # kwargs to pass to StepRunner
+        self,
+        step: StepRunner | str = None,  # StepRunner or path to notebook
+        **kwargs,  # kwargs to pass to StepRunner
     ):
         "Add step to pipeline"
         if isinstance(step, str):
@@ -51,12 +52,18 @@ class Pipeline:
         return self
 
     def run(
-            self, 
-            progress_bar: bool = False,  # Whether to show progress bar
-            **kwargs  # kwargs to pass to StepRunner.run
+        self,
+        progress_bar: bool = False,  # Whether to show progress bar
+        save_notebook: bool = False,
+        kernel: str = ":target",
+        kernels_on_fail: str | list = None,
+        verbose=True,
+        **kwargs,  # kwargs to pass to StepRunner.run
     ):
         "Run pipeline"
-        longest_worker_path_adjusted = max([len(step.worker_path) for step in self.steps])
+        longest_worker_path_adjusted = max(
+            [len(step.worker_path) for step in self.steps]
+        )
         min_blank = 10
 
         it = enumerate(self.steps)
@@ -75,20 +82,28 @@ class Pipeline:
             print_header(text, i, longest_worker_path_adjusted, min_blank)
             print(f"Variables: {step.env_vars}")
             # Run step
-            step.run(verbose=False, **kwargs)
+            if not step.run(
+                verbose=verbose,
+                kernel=kernel,
+                kernels_on_fail=kernels_on_fail,
+                save_notebook=save_notebook,
+                run_from_pipeline=True,
+                **kwargs,
+            ):
+                logger.error(
+                    f"Error while running step {i+1} of the pipeline. Pipeline stopped."
+                )
+                break
 
             print("", end="\n\n")
 
     def __call__(
-            self,
-            progress_bar: bool = False,  # Whether to show progress bar
-            **kwargs  # kwargs to pass to StepRunner.run
+        self,
+        progress_bar: bool = False,  # Whether to show progress bar
+        **kwargs,  # kwargs to pass to StepRunner.run
     ):
         "Run pipeline"
-        self.run(
-            progress_bar=progress_bar,
-            **kwargs
-        )
+        self.run(progress_bar=progress_bar, **kwargs)
 
     def __str__(self):
         s = (

@@ -100,7 +100,7 @@ class FlowEnv:  # has to be singleton
         # save current working directory
         self.cwd = os.getcwd()
         # change working directory
-        os.chdir(workspace)
+        # os.chdir(workspace)  # Now this operation is done by giving an argument when running the notebook
 
     def end_run(self) -> None:
         self.remove_vars()  # Must be before remove_last_path
@@ -108,4 +108,4 @@ class FlowEnv:  # has to be singleton
         if self.id == -1:
             del os.environ[RUN_ENV_KEY]
         # change working directory back
-        os.chdir(self.cwd)
+        # os.chdir(self.cwd)

@@ -42,6 +42,7 @@ ingestion_ppl = Pipeline(
 
 # === OR ===
 ingestion_ppl = Pipeline()
+
 ingestion_ppl.add_step(StepRunner(dm + "01_ingestion/countries.ipynb"))
 # OR
 ingestion_ppl.add_step(dm + "01_ingestion/world_happiness.ipynb")
@@ -68,15 +69,16 @@ ingestion_ppl
 Run the pipeline
 
 ``` python
-ingestion_ppl.run()
+ingestion_ppl.run(verbose=True, kernel=":any_available")
 ```
 
     =================================================================================
         01.                ../demo_project/notebooks/01_ingestion/countries.ipynb
     =================================================================================
     Variables: {}
-        Path: countries.ipynb
-        Duration: 0 days 00:00:00.743971
+    using kernel:  python3
+        Path: ../demo_project/notebooks/01_ingestion/countries.ipynb
+        Duration: 0 days 00:00:00.603051
         Env: {}
     Notebook executed successfully.
 
@@ -85,8 +87,9 @@ ingestion_ppl.run()
         02.          ../demo_project/notebooks/01_ingestion/world_happiness.ipynb
     =================================================================================
     Variables: {}
-        Path: world_happiness.ipynb
-        Duration: 0 days 00:00:00.643122
+    using kernel:  python3
+        Path: ../demo_project/notebooks/01_ingestion/world_happiness.ipynb
+        Duration: 0 days 00:00:00.644909
         Env: {}
     Notebook executed successfully.
 
@@ -98,14 +101,16 @@ ingestion_ppl.run()
 import stdflow as sf
 import pandas as pd
 
+
 # load data from ../demo_project/data/countries/step_loaded/v_202309212245/countries.csv
 df = sf.load(
    root="../demo_project/data/",
    attrs=['countries'],
-   step='loaded',
-   version='202309212245',  # loads v_202309212245
+   step='created',
+   version=':last',  # loads last version in alphanumeric order
    file_name='countries.csv',
-   method=pd.read_csv  # or method='csv'
+   method=pd.read_csv,  # or method='csv'
+   verbose=False,
 )
 
 # export data to ./data/raw/twitter/france/step_processed/v_1/countries.csv
@@ -113,14 +118,14 @@ sf.save(
    df,
    root="../demo_project/data/",
    attrs='countries/',
-   step='processed',
-   version='new',  # creates v_new
+   step='loaded',
+   version='%Y-03',  # creates v_2023-03
    file_name='countries.csv',
    method=pd.DataFrame.to_csv,  # or method='csv'  or any function that takes the object to export as first input
 )
 ```
 
-    attrs=countries/::step_name=processed::version=new::file_name=countries.csv
+    attrs=countries/::step_name=loaded::version=2023-03::file_name=countries.csv
 
 Each time you perform a save, a metadata.json file is created in the
 folder. This keeps track of how your data was created and other
@@ -130,12 +135,13 @@ information.
 
 ``` python
 import stdflow as sf
+sf.reset()  # used when multiple steps are done with the same Step object (not recommended). see below
 
 # use package level default values
 sf.root = "../demo_project/data/"
 sf.attrs = 'countries'  # if needed use attrs_in and attrs_out
 sf.step_in = 'loaded'
-sf.step_out = 'processed'
+sf.step_out = 'formatted'
 
 df = sf.load()
 # ! root / attrs / step : used from default values set above
@@ -150,10 +156,12 @@ sf.save(df)
 # ! method : inferred from file name
 ```
 
-    attrs=countries::step_name=processed::version=202309212303::file_name=countries.csv
+    attrs=countries::step_name=formatted::version=202310101716::file_name=countries.csv
 
 Note that everything we did at package level can be done with the Step
-class
+class When you have multiple steps in a notebook, you can create one
+Step object per step. stdflow (sf) at package level is a singleton
+instance of Step.
 
 ``` python
 from stdflow import Step
@@ -161,8 +169,8 @@ from stdflow import Step
 step = Step(
     root="../demo_project/data/",
     attrs='countries',
-    step_in='loaded',
-    step_out='processed'
+    step_in='formatted',
+    step_out='pre_processed'
 )
 # or set after
 step.root = "../demo_project/data/"
@@ -173,13 +181,17 @@ df = step.load(version=':last', file_name=":auto", verbose=True)
 step.save(df, verbose=True)
 ```
 
-    INFO:stdflow.step:Loading data from ../demo_project/data/countries/step_loaded/v_202309212302/countries.csv
-    INFO:stdflow.step:Data loaded from ../demo_project/data/countries/step_loaded/v_202309212302/countries.csv
-    INFO:stdflow.step:Saving data to ../demo_project/data/countries/step_processed/v_202309212304/countries.csv
-    INFO:stdflow.step:Data saved to ../demo_project/data/countries/step_processed/v_202309212304/countries.csv
-    INFO:stdflow.step:Saving metadata to ../demo_project/data/countries/step_processed/v_202309212304/
+    INFO:stdflow.step:Loading data from ../demo_project/data/countries/step_formatted/v_202310101716/countries.csv
+    INFO:stdflow.step:Data loaded from ../demo_project/data/countries/step_formatted/v_202310101716/countries.csv
+    INFO:stdflow.step:Saving data to ../demo_project/data/countries/step_pre_processed/v_202310101716/countries.csv
+    INFO:stdflow.step:Data saved to ../demo_project/data/countries/step_pre_processed/v_202310101716/countries.csv
+    INFO:stdflow.step:Saving metadata to ../demo_project/data/countries/step_pre_processed/v_202310101716/
 
-    attrs=countries::step_name=processed::version=202309212304::file_name=countries.csv
+    attrs=countries::step_name=pre_processed::version=202310101716::file_name=countries.csv
+
+Each time you perform a save, a metadata.json file is created in the
+folder. This keeps track of how your data was created and other
+information.
 
 ## Do not
 
@@ -194,12 +206,12 @@ import stdflow as sf
 step.save(df, verbose=True, export_viz_tool=True)
 ```
 
-    INFO:stdflow.step:Saving data to ../demo_project/data/countries/step_processed/v_202309212304/countries.csv
-    INFO:stdflow.step:Data saved to ../demo_project/data/countries/step_processed/v_202309212304/countries.csv
-    INFO:stdflow.step:Saving metadata to ../demo_project/data/countries/step_processed/v_202309212304/
-    INFO:stdflow.step:Exporting viz tool to ../demo_project/data/countries/step_processed/v_202309212304/
+    INFO:stdflow.step:Saving data to ../demo_project/data/countries/step_pre_processed/v_202310101716/countries.csv
+    INFO:stdflow.step:Data saved to ../demo_project/data/countries/step_pre_processed/v_202310101716/countries.csv
+    INFO:stdflow.step:Saving metadata to ../demo_project/data/countries/step_pre_processed/v_202310101716/
+    INFO:stdflow.step:Exporting viz tool to ../demo_project/data/countries/step_pre_processed/v_202310101716/
 
-    attrs=countries::step_name=processed::version=202309212304::file_name=countries.csv
+    attrs=countries::step_name=pre_processed::version=202310101716::file_name=countries.csv
 
 This command exports a folder `metadata_viz` in the same folder as the
 data you exported. The metadata to display is saved in the metadata.json

@@ -64,13 +64,28 @@ class StepRunner:
 
         self.env_vars: dict = variables or {}
 
-    def run(self, verbose: bool = True, **kwargs) -> Any:
+    def run(
+        self,
+        kernel: Literal[":current", ":target", ":any_available"] | str = ":target",
+        kernels_on_fail: list | str = None,
+        save_notebook: bool = False,
+        verbose: bool = True,
+        **kwargs,
+    ) -> str:
         """
         Run the function of the pipeline
-        :return:
+        :arg: kernel: kernel name to use or :current to use the current kernel :target to use the kernel in the metadata
+         of the target notebook, :any_available to use any available kernel
+        :arg: kernels_on_fail: list of kernels to try if the kernel specified in kernel fails
+        :arg: save_notebook (bool): whether to save the notebook after execution
+        :arg: verbose (bool): whether to print information about the execution
+        :return: str: message about the execution
         """
 
-        if verbose:
+        if kernels_on_fail is None:
+            kernels_on_fail = [":current", "python", ":any_available"]
+
+        if verbose and not kwargs.get("run_from_pipeline", False):
             print_header(self.worker_path)
             print(f"Variables: {self.env_vars}")
 
@@ -92,9 +107,20 @@ class StepRunner:
         self.env.start_run(self.workspace, self.path, self.env_vars)
         try:
             if extension == ".ipynb" and not self.exec_function_name:
-                run_notebook(path=self.path, env_vars=self.env_vars, **kwargs)
+                return run_notebook(
+                    path=self.worker_path,
+                    save_notebook=save_notebook,
+                    kernel=kernel,
+                    run_path=self.workspace,
+                    env_vars=self.env_vars,
+                    kernels_on_fail=kernels_on_fail,
+                    verbose=verbose,
+                    **kwargs,
+                )
             elif extension == ".ipynb" and self.exec_function_name:
-                raise NotImplementedError("run python function in notebooks not implemented yet")
+                raise NotImplementedError(
+                    "run python function in notebooks not implemented yet"
+                )
             elif extension == ".py" and not self.exec_function_name:
                 # run_python_file(path=self.worker_path, env_vars=env_run, **kwargs)
                 raise NotImplementedError("run python file not implemented yet")
@@ -126,4 +152,5 @@ class StepRunner:
             )
             return False
         return True
+
 

@@ -3,6 +3,7 @@ import random
 import string
 import unittest
 
+from stdflow import StepRunner
 from stdflow.stdflow_utils.execution import run_function, run_notebook, run_python_file
 
 
@@ -17,7 +18,13 @@ class TestEnvExport(unittest.TestCase):
         os.environ.update(self.env_vars)
 
     def test_env_export_notebook(self):
-        run_notebook("tests/execution/env_export_notebook.ipynb", env_vars=self.env_vars)
+        run_notebook(
+            "tests/execution/env_export_notebook.ipynb",
+            env_vars=self.env_vars,
+            run_path="tests/execution/",
+            kernel=":any_available",
+            kernels_on_fail=None,
+        )
         with open("/tmp/env_notebook.txt", "r") as f:
             content = f.read().splitlines()
         for var, value in self.env_vars.items():
@@ -38,6 +45,13 @@ class TestEnvExport(unittest.TestCase):
             content = f.read().splitlines()
         for var, value in self.env_vars.items():
             self.assertIn(f"{var}={value}", content)
+
+    def test_wd_step_runner(self):
+        step_runner = StepRunner("_experiments/export_working_dir.ipynb")
+        step_runner.run()
+        with open("/tmp/std_inflow.txt", "r") as f:
+            content = f.read()
+        assert content == "_experiments"
 
 
 if __name__ == "__main__":
