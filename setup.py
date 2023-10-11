@@ -55,6 +55,7 @@ setuptools.setup(
         "nbconvert",
         "colorama",
         "tqdm",
+        "jupyter-client"
     ],
     extras_require={ 'dev': dev_requirements },
     dependency_links = cfg.get('dep_links','').split(),

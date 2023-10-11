@@ -16,6 +16,13 @@ from tqdm.notebook import tqdm
 from . import StepRunner
 from .stdflow_utils.bt_print import print_header
 
+try:
+    from typing import Literal, Optional
+except ImportError:
+    from typing_extensions import Literal, Optional
+
+from itertools import product
+
 
 # %% ../nbs/05_pipeline.ipynb 5
 logging.basicConfig()
@@ -53,14 +60,21 @@ class Pipeline:
 
     def run(
         self,
+        save_notebook: bool = False,  # Saves the output of cells in the notebook if True (default: False)
         progress_bar: bool = False,  # Whether to show progress bar
-        save_notebook: bool = False,
-        kernel: str = ":target",
-        kernels_on_fail: str | list = None,
-        verbose=True,
+        kernel: Literal[":current", ":target", ":any_available"] | str = ":target",  # kernel name or :current to use current kernel, :target to use kernel specified in metadata of target notebook, :any_available to use any available kernel.
+        kernels_on_fail: str | list = None,  # kernels to try if `kernel` does not exist / is not available (default: [":current", "python", ":any_available"])
+        verbose=True,  # Whether to print output of cells
         **kwargs,  # kwargs to pass to StepRunner.run
     ):
         "Run pipeline"
+
+        if kernels_on_fail is None:
+            kernels_on_fail = [":current", "python", ":any_available"]
+        # convert to list
+        if isinstance(kernels_on_fail, str):
+            kernels_on_fail = [kernels_on_fail]
+            
         longest_worker_path_adjusted = max(
             [len(step.worker_path) for step in self.steps]
         )

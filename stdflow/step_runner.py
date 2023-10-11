@@ -66,9 +66,9 @@ class StepRunner:
 
     def run(
         self,
-        kernel: Literal[":current", ":target", ":any_available"] | str = ":target",
-        kernels_on_fail: list | str = None,
-        save_notebook: bool = False,
+        save_notebook: bool = False,  # Saves the output of cells in the notebook if True (default: False)
+        kernel: Literal[":current", ":target", ":any_available"] | str = ":target",  # kernel name or :current to use current kernel, :target to use kernel specified in metadata of target notebook, :any_available to use any available kernel.
+        kernels_on_fail: list | str = None,  # kernels to try if `kernel` does not exist / is not available (default: [":current", "python", ":any_available"])
         verbose: bool = True,
         **kwargs,
     ) -> str:
@@ -84,6 +84,9 @@ class StepRunner:
 
         if kernels_on_fail is None:
             kernels_on_fail = [":current", "python", ":any_available"]
+        # convert to list
+        if isinstance(kernels_on_fail, str):
+            kernels_on_fail = [kernels_on_fail]
 
         if verbose and not kwargs.get("run_from_pipeline", False):
             print_header(self.worker_path)
