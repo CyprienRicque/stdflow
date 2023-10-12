@@ -107,7 +107,7 @@ class FileMetaData:
                 for c, t in zip(data.columns, data.dtypes)
             )
         else:
-            logger.warning(f"unknown data type: {type(data)}")
+            logger.debug(f"unknown data type: {type(data)}")
             columns = []
         return cls(path, columns, export_method_used, input_files or [], col_steps=None, uuid_=None)
 

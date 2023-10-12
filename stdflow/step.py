@@ -325,20 +325,20 @@ class Step(ModuleType):
         root/*attrs/step/version/file_name
         """
         
-        original_logger_level = logger.level
-        logger.setLevel(logging.INFO if verbose else logging.WARNING)
+        # original_logger_level = logger.level
+        # logger.setLevel(logging.INFO if verbose else logging.WARNING)
 
         # DEBUG prints
-        caller_file_name, caller_function, caller_package = get_caller_metadata()
-        if "ipykernel" in caller_file_name:
-            notebook_path, notebook_name = get_notebook_path()
-            logger.debug(f"Called from jupyter notebook {notebook_name} in {notebook_path}")
-        elif caller_function == "<module>":
-            logger.debug(f"Called from python file {caller_file_name}")
-        else:
-            logger.debug(f"Called from function {caller_function} in {caller_file_name}")
-
-        logger.debug(f"caller_metadata: {caller_file_name, caller_function, caller_package}")
+        # caller_file_name, caller_function, caller_package = get_caller_metadata()
+        # if "ipykernel" in caller_file_name:
+        #     notebook_path, notebook_name = get_notebook_path()
+        #     logger.debug(f"Called from jupyter notebook {notebook_name} in {notebook_path}")
+        # elif caller_function == "<module>":
+        #     logger.debug(f"Called from python file {caller_file_name}")
+        # else:
+        #     logger.debug(f"Called from function {caller_function} in {caller_file_name}")
+        # 
+        # logger.debug(f"caller_metadata: {caller_file_name, caller_function, caller_package}")
         # END DEBUG prints
 
         # if arguments are None, use step level arguments
@@ -368,6 +368,8 @@ class Step(ModuleType):
             method = loaders[method]
 
         # Load data
+        if verbose:
+            print(f"Loading data from {path.full_path}")
         logger.info(f"Loading data from {path.full_path}")
         data = method(path.full_path, **kwargs)
         logger.info(f"Data loaded from {path.full_path}")
@@ -431,7 +433,7 @@ class Step(ModuleType):
                 alias=alias,
             )
 
-        logger.setLevel(original_logger_level)
+        # logger.setLevel(original_logger_level)
         return data
 
     def save(
@@ -452,8 +454,8 @@ class Step(ModuleType):
         Save data with path such as
         root/attrs/step/version/file_name
         """
-        original_logger_level = logger.level
-        logger.setLevel(logging.INFO if verbose else logging.WARNING)
+        # original_logger_level = logger.level
+        # logger.setLevel(logging.INFO if verbose else logging.WARNING)
 
         # if arguments are None, use step level arguments
         root = get_arg_value(get_arg_value(root, self._root_out), self._root)
@@ -462,6 +464,17 @@ class Step(ModuleType):
         version = get_arg_value(get_arg_value(get_arg_value(version, self._version_out), self._version), DEFAULT_DATE_VERSION_FORMAT)
         file = get_arg_value(get_arg_value(file_name, self._file_name_out), self._file_name)
         method = get_arg_value(method, self._method_out)
+        
+        if version in [":last", ":first"]:
+            raise ValueError(f"version cannot be {version} on saving. Use a string, \":default\" or a strftime format")
+        
+        if verbose:
+            print(f"sf.root = {root}")
+            print(f"sf.attrs = {attrs}")
+            print(f"sf.step = {step}")
+            print(f"sf.version = {version}")
+            print(f"sf.file_name = {file}")
+            print(f"sf.method = {method}")
 
         if Strftime.__call__(version):
             version = datetime.now().strftime(version)
@@ -499,6 +512,8 @@ class Step(ModuleType):
             method = savers[method]
 
         # Save data
+        if verbose:
+            print(f"Saving data to {path.full_path}")
         logger.info(f"Saving data to {path.full_path}")
         method(data, path.full_path, **kwargs)
         logger.info(f"Data saved to {path.full_path}")
@@ -518,9 +533,11 @@ class Step(ModuleType):
 
         if export_viz_tool:
             logger.info(f"Exporting viz tool to {path.dir_path}")
+            if verbose:
+                print(f"Exporting viz folder to {path.dir_path}")
             export_viz_html(path.metadata_path, path.dir_path)
 
-        logger.setLevel(original_logger_level)
+        # logger.setLevel(original_logger_level)
 
         return path
 
