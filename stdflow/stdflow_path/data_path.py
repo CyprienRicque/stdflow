@@ -45,6 +45,8 @@ class DataPath(Path):
         """
         super().__init__(root, file_name)
 
+        # TODO version cannot be default
+
         # if step is str and contains step_, remove it
         if isinstance(step_name, str) and step_name.startswith(STEP_PREFIX):
             step_name = step_name[len(STEP_PREFIX) :]
